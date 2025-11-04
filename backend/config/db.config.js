@@ -5,7 +5,7 @@ module.exports = {
   // Thay thế các giá trị này bằng thông tin đăng nhập PostgreSQL của bạn
   HOST: "it4409-lamcaro12212332-9c35.b.aivencloud.com",
   USER: "avnadmin", // Thường là 'postgres'
-  PASSWORD: "AVNS_zXp2bR3IsbkKWR9lEDO", // **Thay thế bằng mật khẩu của bạn**
+  PASSWORD: process.env.DB_PASSWORD, // **Thay thế bằng mật khẩu của bạn**
   DB: "defaultdb",
   dialect: "postgres",
   pool: {
