@@ -1,24 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
+// frontend/src/App.js (Cập nhật)
+import React from 'react';
+import './App.css'; 
+import LeafletMapComponent from './MapContainer';
+import LocationCRUD from './LocationCRUD'; // <-- Sẽ tạo sau
+import { AuthProvider } from './context/AuthContext'; // <-- Import AuthProvider
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AuthProvider> {/* Bọc toàn bộ ứng dụng */}
+      <div className="App">
+        <header className="App-header">
+          <h1>Bản đồ Ẩm thực Hà Nội </h1>
+        </header>
+        {/* Component CRUD chỉ dành cho Admin */}
+        <LocationCRUD /> 
+        
+        <div style={{ padding: '20px' }}>
+          <LeafletMapComponent />
+        </div>
+      </div>
+    </AuthProvider>
   );
 }
 
