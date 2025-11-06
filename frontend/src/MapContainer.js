@@ -1,6 +1,6 @@
 // frontend/src/MapContainer.js (Cập nhật logic)
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import axios from 'axios';
 import useGeolocation from './hooks/useGeolocation'; 
 import 'leaflet/dist/leaflet.css'; // Đảm bảo đã import CSS
@@ -100,11 +100,24 @@ const LeafletMapComponent = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {/* Marker Vị trí Người dùng */}
+        {/* Vị trí người dùng + vòng tròn bán kính */}
         {userLocation.coordinates.lat && (
-          <Marker position={[userLocation.coordinates.lat, userLocation.coordinates.lng]}>
-              <Popup>Vị trí hiện tại của bạn.</Popup>
-          </Marker>
+          <>
+            <Marker position={[userLocation.coordinates.lat, userLocation.coordinates.lng]}>
+              <Popup>📍 Vị trí hiện tại của bạn</Popup>
+            </Marker>
+
+            {/* Vòng tròn bán kính 5km quanh bạn */}
+            <Circle
+              center={[userLocation.coordinates.lat, userLocation.coordinates.lng]}
+              radius={5000} // mét
+              pathOptions={{
+                color: 'blue',
+                fillColor: 'lightblue',
+                fillOpacity: 0.25,
+              }}
+            />
+          </>
         )}
 
         {/* Marker Địa điểm Gần đó */}

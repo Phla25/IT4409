@@ -1,5 +1,4 @@
-// frontend/src/hooks/useGeolocation.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const useGeolocation = () => {
   const [location, setLocation] = useState({
@@ -8,46 +7,71 @@ const useGeolocation = () => {
     error: null,
   });
 
-  // Hàm xử lý khi lấy vị trí thành công
+  const lastPosition = useRef(null); // 🧭 Lưu vị trí gần nhất để so sánh
+
   const onSuccess = (position) => {
-    setLocation({
-      loaded: true,
-      coordinates: {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      },
-      error: null,
-    });
+    const { latitude, longitude, accuracy } = position.coords;
+
+    // Nếu vị trí mới khác biệt đáng kể so với vị trí cũ thì mới cập nhật
+    if (
+      !lastPosition.current ||
+      getDistance(
+        lastPosition.current.latitude,
+        lastPosition.current.longitude,
+        latitude,
+        longitude
+      ) > 0.02 // chỉ cập nhật nếu di chuyển > 20m
+    ) {
+      lastPosition.current = { latitude, longitude };
+      setLocation({
+        loaded: true,
+        coordinates: { lat: latitude, lng: longitude },
+        error: null,
+      });
+    }
   };
 
-  // Hàm xử lý khi lấy vị trí thất bại hoặc bị từ chối
   const onError = (error) => {
     setLocation({
       loaded: true,
       coordinates: { lat: null, lng: null },
-      error: error.message || "Lỗi định vị không xác định.",
+      error: error.message || 'Không thể lấy vị trí người dùng.',
     });
   };
 
   useEffect(() => {
-    // 1. Kiểm tra hỗ trợ trình duyệt
-    if (!("geolocation" in navigator)) {
-      onError({ code: 0, message: "Trình duyệt không hỗ trợ định vị." });
+    if (!('geolocation' in navigator)) {
+      onError({ message: 'Trình duyệt không hỗ trợ định vị.' });
       return;
     }
 
-    // 2. Sử dụng watchPosition để theo dõi vị trí liên tục
+    // Sử dụng watchPosition để theo dõi vị trí liên tục
     const watchId = navigator.geolocation.watchPosition(onSuccess, onError, {
-      enableHighAccuracy: true, // Tăng độ chính xác
-      timeout: 10000,          // Thời gian chờ
-      maximumAge: 0,           // Không sử dụng cache
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 10000,
     });
 
-    // 3. Cleanup: Dừng theo dõi khi component bị hủy
+    // Cleanup khi component unmount
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []); // Chỉ chạy một lần khi component mount
+  }, []);
 
   return location;
 };
+
+// 👉 Hàm tính khoảng cách giữa 2 tọa độ (km)
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default useGeolocation;
