@@ -1,93 +1,133 @@
-/* Nền mờ toàn màn hình */
+/* Nền mờ với hiệu ứng blur */
 .auth-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* đè lên mọi thứ */
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in;
 }
 
-/* Hộp modal */
+/* Hộp modal chính */
 .auth-modal {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  padding: 35px 40px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 420px;
   text-align: center;
-  position: relative;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  animation: popIn 0.3s ease-out;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.35s ease-out;
+  transition: all 0.25s ease;
 }
 
 /* Nút đóng */
 .close-btn {
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 12px;
+  right: 18px;
   font-size: 22px;
-  color: #666;
+  color: #ccc;
   background: none;
   border: none;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-/* Input và nút */
+.close-btn:hover {
+  color: #fff;
+}
+
+/* Input đẹp hơn */
 .auth-modal input {
   width: 100%;
-  margin: 8px 0;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 15px;
+  outline: none;
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
 }
 
+.auth-modal input:focus {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* Nút gửi form */
 .auth-modal button[type="submit"] {
   width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  background: #2563eb;
-  color: white;
+  margin-top: 14px;
+  padding: 12px;
+  font-weight: 600;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background 0.2s ease;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  font-size: 15px;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+  transition: all 0.25s ease;
 }
 
 .auth-modal button[type="submit"]:hover {
-  background: #1d4ed8;
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.45);
 }
 
-/* Text nhỏ */
+/* Text nhỏ chuyển giữa login/register */
 .toggle {
-  margin-top: 10px;
+  margin-top: 15px;
   font-size: 14px;
+  color: #d1d5db;
 }
 
 .toggle span {
-  color: #2563eb;
+  color: #60a5fa;
   cursor: pointer;
   text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.toggle span:hover {
+  color: #93c5fd;
 }
 
 /* Thông báo lỗi */
 .error {
-  color: red;
+  color: #ff6b6b;
   font-size: 13px;
   margin-top: 5px;
 }
 
-/* Hiệu ứng bật lên */
+/* Hiệu ứng bật lên + fade */
 @keyframes popIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.9) translateY(10px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

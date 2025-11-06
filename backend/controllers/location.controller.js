@@ -53,6 +53,26 @@ exports.createLocation = async (req, res) => {
     }
 };
 
+// [BATCH CREATE] Thêm nhiều địa điểm cùng lúc (Excel import)
+exports.batchCreateLocations = async (req, res) => {
+  try {
+    const { locations } = req.body;
+    if (!Array.isArray(locations) || locations.length === 0) {
+      return res.status(400).json({ message: 'Dữ liệu import không hợp lệ hoặc rỗng.' });
+    }
+
+    const result = await Location.bulkCreate(locations);
+    res.status(201).json({
+      message: 'Thêm hàng loạt thành công.',
+      count: result.length,
+      added: result
+    });
+  } catch (error) {
+    console.error('Lỗi batch import:', error);
+    res.status(500).json({ message: 'Lỗi khi thêm hàng loạt địa điểm.' });
+  }
+};
+
 // [CRUD] READ Single (Giữ nguyên)
 exports.getLocationById = async (req, res) => {
     try {

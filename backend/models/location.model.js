@@ -64,6 +64,44 @@ class Location {
     const result = await db.query(sql, [id]);
     return result.rows[0];
   }
+
+    // [CRUD] Thêm hàng loạt địa điểm (cho import Excel)
+  static async bulkCreate(locations = []) {
+    if (!Array.isArray(locations) || locations.length === 0)
+      throw new Error("Danh sách địa điểm rỗng.");
+
+    const values = [];
+    const placeholders = [];
+
+    locations.forEach((loc, i) => {
+      const idx = i * 10;
+      placeholders.push(`($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9}, $${idx + 10})`);
+      values.push(
+        loc.name || '',
+        loc.description || '',
+        loc.address || '',
+        loc.district || '',
+        loc.latitude || 0,
+        loc.longitude || 0,
+        loc.phone_number || '',
+        loc.min_price || 0,
+        loc.max_price || 0,
+        loc.is_approved === true // TRUE/FALSE rõ ràng
+      );
+    });
+
+    const sql = `
+      INSERT INTO Locations 
+        (name, description, address, district, latitude, longitude, phone_number, min_price, max_price, is_approved)
+      VALUES 
+        ${placeholders.join(', ')}
+      RETURNING id, name;
+    `;
+
+    const result = await db.query(sql, values);
+    return result.rows;
+  }
+
 }
 
 module.exports = Location;

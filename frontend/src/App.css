@@ -1,69 +1,378 @@
-@import '~leaflet/dist/leaflet.css'; 
-/* ----------------------------------- */
+@import '~leaflet/dist/leaflet.css';
 
+/* ----------- RESET & GLOBAL ----------- */
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #1e1f24;
+  color: #fff;
+}
+
+/* ----------- APP LAYOUT ----------- */
 .App {
   text-align: center;
-}
-
-/* Đảm bảo container bản đồ có kích thước rõ ràng */
-.map-container-leaflet {
-  height: 800px; /* Điều chỉnh chiều cao theo ý bạn */
-  width: 100%;
-}
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
 }
 
 .App-header {
-  background-color: #282c34;
+  background: radial-gradient(circle at 20% 30%, #2a2d33, #1e1f24 80%);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 16px;
+  padding: 40px;
 }
 
-.App-link {
-  color: #61dafb;
+/* Tiêu đề chính */
+.App-header h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+  line-height: 2;
 }
 
+/* Dòng chữ phụ */
+.App-header p {
+  font-size: 1.1rem;
+  color: #d1d5db;
+  margin-bottom: 20px;
+}
+
+/* ----------- BUTTON STYLE ----------- */
 .login-btn {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
   font-weight: 600;
   border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 12px;
+  padding: 12px 28px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
   transition: all 0.25s ease;
+  font-size: 1rem;
 }
 
 .login-btn:hover {
-  background: linear-gradient(135deg, #2563eb, #1e40af);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+}
+
+/* ----------- MAP ----------- */
+.map-container-leaflet {
+  height: 800px;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  margin-top: 20px;
+}
+
+/* --- ADMIN CRUD --- */
+.crud-container {
+  background: #2a2d33;
+  padding: 30px;
+  border-radius: 16px;
+  margin: 40px auto;
+  max-width: 1100px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  color: #fff;
+}
+
+.crud-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #93c5fd;
+  margin-bottom: 20px;
+}
+
+.crud-error {
+  background: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.crud-form h3 {
+  color: #60a5fa;
+  margin-bottom: 10px;
+}
+
+.crud-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.crud-form input, .crud-form textarea {
+  background: #1f2125;
+  color: white;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
 }
 
 
-@keyframes App-logo-spin {
+.crud-form input:focus, .crud-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 6px rgba(59,130,246,0.4);
+}
+
+.crud-checkbox {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crud-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-success {
+  background: #16a34a;
+}
+
+.btn-warning {
+  background: #f59e0b;
+}
+
+.btn-gray {
+  background: #6b7280;
+}
+
+.btn-blue {
+  background: #2563eb;
+}
+
+.btn-red {
+  background: #dc2626;
+}
+
+.btn-success, .btn-warning, .btn-gray, .btn-blue, .btn-red {
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover, .btn-warning:hover, .btn-gray:hover,
+.btn-blue:hover, .btn-red:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.crud-subtitle {
+  margin-top: 30px;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.crud-list {
+  margin-top: 15px;
+}
+
+.crud-card {
+  background: #1f2125;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.crud-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(59,130,246,0.3);
+}
+
+.crud-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-approved {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.crud-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ----------- ANIMATIONS ----------- */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
+
+.App-header > * {
+  animation: fadeIn 0.7s ease forwards;
+}
+
+/* ----------- TEXTAREA FULL WIDTH ----------- */
+.crud-textarea {
+  grid-column: 1 / -1; /* chiếm hết chiều ngang grid */
+  width: 100%;
+  resize: vertical;
+  min-height: 120px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #1f2125;
+  color: white;
+  margin-top: 10px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.crud-textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* ----------- RESPONSIVE DESIGN ----------- */
+@media (max-width: 900px) {
+  .crud-container {
+    padding: 20px;
+    max-width: 95%;
+  }
+
+  .crud-grid {
+    grid-template-columns: 1fr; /* 1 cột thay vì 2 cột */
+    gap: 12px;
+  }
+
+  .crud-actions {
+    flex-direction: column;
+  }
+
+  .crud-actions button {
+    width: 100%;
+  }
+
+  .crud-card {
+    padding: 12px;
+  }
+
+  .crud-title {
+    font-size: 1.4rem;
+  }
+
+  .crud-form h3 {
+    font-size: 1rem;
+  }
+}
+
+/* ===== Theme System ===== */
+:root {
+  /* 🌞 LIGHT MODE */
+  --bg-color: #f9fafb;
+  --text-color: #0f172a; /* đậm hơn */
+  --card-bg: #ffffff;
+  --input-bg: #f3f4f6;
+  --input-border: #cbd5e1;
+  --muted-text: #334155; /* chữ phụ đậm hơn */
+}
+
+.dark-mode {
+  /* 🌙 DARK MODE */
+  --bg-color: #1e1f24;
+  --text-color: #f9fafb;
+  --card-bg: #2a2d33;
+  --input-bg: #1f2125;
+  --input-border: #374151;
+  --muted-text: #9ca3af;
+}
+
+/* Áp dụng màu chung */
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-weight: 500; /* chữ trung bình đậm hơn một chút */
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Tiêu đề đậm hơn khi nền sáng */
+h1, h2, h3, h4, h5 {
+  color: var(--text-color);
+  font-weight: 700;
+}
+
+/* Chữ phụ hoặc mô tả */
+p, span, label {
+  color: var(--muted-text);
+}
+
+/* Ô nhập liệu hiển thị rõ hơn */
+.crud-form input,
+.crud-form textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* Container */
+.crud-container {
+  background: var(--card-bg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+
+.crud-form input,
+.crud-form textarea {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+/* 🌙 Nút chuyển chế độ */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+  background: #1d4ed8;
+}
+
+

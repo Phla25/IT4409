@@ -1,4 +1,3 @@
-// frontend/src/App.js
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import LeafletMapComponent from './MapContainer';
@@ -10,7 +9,21 @@ function MainApp() {
   const { authToken, logout, userRole, login } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Giữ trạng thái đăng nhập sau khi reload trang
+  // 🌞 Theme (mặc định là light)
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+      document.body.classList.remove('dark-mode');
+    } else {
+      document.body.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // 🔑 Giữ trạng thái đăng nhập
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
@@ -19,6 +32,15 @@ function MainApp() {
 
   return (
     <div className="App">
+      {/* ☀️ / 🌙 Nút chuyển theme */}
+      <button
+        className="theme-toggle"
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        title={theme === 'light' ? 'Chuyển sang tối' : 'Chuyển sang sáng'}
+      >
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
+
       <header className="App-header">
         <h1>Bản đồ Ẩm thực Hà Nội</h1>
 
@@ -32,24 +54,21 @@ function MainApp() {
         ) : (
           <div>
             <p>Vai trò: {userRole}</p>
-            <button
-              onClick={logout}
-              className="login-btn"
-            >
+            <button onClick={logout} className="login-btn">
               Đăng xuất
             </button>
           </div>
         )}
       </header>
 
-      {/* CRUD chỉ Admin mới thấy */}
+      {/* CRUD chỉ hiển thị khi là admin */}
       {authToken && userRole === 'admin' && <LocationCRUD />}
 
       <div style={{ padding: '20px' }}>
         <LeafletMapComponent />
       </div>
 
-      {/* Popup đăng nhập / đăng ký */}
+      {/* Modal đăng nhập / đăng ký */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
@@ -64,4 +83,3 @@ function App() {
 }
 
 export default App;
-

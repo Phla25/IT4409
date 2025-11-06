@@ -13,6 +13,14 @@ const authMiddleware = require('../middlewares/auth.middleware');
 router.get('/', locationController.getAllLocations); // Lấy tất cả đã duyệt cho Map
 router.get('/nearby', locationController.getNearbyLocations); // Gợi ý gần bạn
 
+// --- IMPORT HÀNG LOẠT TỪ EXCEL ---
+// Admin có thể gửi danh sách địa điểm dạng JSON để thêm nhanh
+router.post(
+  '/batch',
+  [authMiddleware.verifyToken, authMiddleware.isAdmin],
+  locationController.batchCreateLocations
+);
+
 // --- PROTECTED ADMIN ROUTES (CRUD) ---
 // Sử dụng mảng middleware [authMiddleware.verifyToken, authMiddleware.isAdmin]
 // Đặt tuyến /admin trước tuyến /:id
