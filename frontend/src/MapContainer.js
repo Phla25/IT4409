@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
 // ... (các hằng số, Component ChangeView, và code khác giữ nguyên) ...
 
 const hanoiPosition = [21.028511, 105.854199];
-const INITIAL_ZOOM = 12;
+const INITIAL_ZOOM = 13.5;
 
 const ChangeView = ({ center, zoom }) => {
   const map = useMap();
@@ -93,18 +93,21 @@ const LeafletMapComponent = () => {
         zoom={INITIAL_ZOOM} 
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
+        maxZoom={20}
       >
         <ChangeView center={mapCenter} zoom={INITIAL_ZOOM} /> 
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
+          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          maxZoom={20}          // cho phép zoom sâu hơn
+          maxNativeZoom={17}    // tile Google chỉ có tới 18
         />
         
         {/* Vị trí người dùng + vòng tròn bán kính */}
         {userLocation.coordinates.lat && (
           <>
             <Marker position={[userLocation.coordinates.lat, userLocation.coordinates.lng]}>
-              <Popup>📍 Vị trí hiện tại của bạn</Popup>
+              <Popup>Vị trí hiện tại của bạn</Popup>
             </Marker>
 
             {/* Vòng tròn bán kính 5km quanh bạn */}
