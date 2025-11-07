@@ -1,5 +1,9 @@
 // backend/server.js
-require('dotenv').config(); 
+const path = require('path');
+console.log("📁 __dirname =", __dirname);
+console.log("📄 Looking for:", path.join(__dirname, '.env'));
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+console.log("🔑 JWT_SECRET =", process.env.JWT_SECRET);
 const express = require('express');
 const cors = require('cors'); 
 const locationRoutes = require('./routes/location.routes');

@@ -64,6 +64,8 @@ exports.adminLogin = async (req, res) => {
       return res.status(400).json({ message: "Tài khoản hoặc mật khẩu admin không đúng." });
     }
 
+    console.log('JWT_SECRET at login:', process.env.JWT_SECRET);
+
     const token = jwt.sign(
       { id: admin.id, role: 'admin' },
       process.env.JWT_SECRET,
