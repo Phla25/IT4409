@@ -31,7 +31,7 @@ exports.getNearbyLocations = async (req, res) => {
 // *** [ĐÃ SỬA/THÊM] ADMIN READ ALL ***
 exports.getAllLocationsForAdmin = async (req, res) => {
     try {
-        const locations = await Location.getAllForAdmin(); 
+        const locations = await Location.getAllLocationsForAdmin(); 
         res.status(200).json({ success: true, count: locations.length, data: locations });
     } catch (error) {
         console.error("Lỗi server khi lấy tất cả địa điểm (Admin):", error);
