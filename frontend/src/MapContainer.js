@@ -113,7 +113,7 @@ const LeafletMapComponent = () => {
             {/* Vòng tròn bán kính 5km quanh bạn */}
             <Circle
               center={[userLocation.coordinates.lat, userLocation.coordinates.lng]}
-              radius={5000} // mét
+              radius={1000} // mét
               pathOptions={{
                 color: 'blue',
                 fillColor: 'lightblue',
