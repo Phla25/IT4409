@@ -9,22 +9,29 @@ exports.register = async (req, res) => {
     return res.status(400).json({ message: "Thiếu thông tin." });
 
   try {
+    const emailNormalized = email.toLowerCase().trim();
+
+    // 🔍 Kiểm tra email tồn tại chưa
+    const check = await db.query('SELECT id, email FROM Users WHERE LOWER(email) = LOWER($1)', [emailNormalized]);
+    console.log('Check email:', emailNormalized, '=>', check.rows);
+
+    if (check.rows.length > 0) {
+      return res.status(400).json({ message: "Email đã tồn tại." });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // 👇 Thêm role mặc định
     const sql = `
       INSERT INTO Users (email, password_hash, username, role)
       VALUES ($1, $2, $3, 'user')
       RETURNING id, username, email, role;
     `;
-    const result = await db.query(sql, [email, password_hash, username]);
+    const result = await db.query(sql, [emailNormalized, password_hash, username]);
 
     res.status(201).json({ success: true, user: result.rows[0] });
   } catch (error) {
-    if (error.code === '23505')
-      return res.status(400).json({ message: "Email đã tồn tại." });
-    console.error(error);
+    console.error('Register error:', error);
     res.status(500).json({ message: "Lỗi server khi đăng ký." });
   }
 };

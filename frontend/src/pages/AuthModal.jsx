@@ -7,17 +7,20 @@ import './AuthModal.css';
 export default function AuthModal({ onClose }) {
   const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); // 👈 thêm
+  const [isAdmin, setIsAdmin] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', username: '' });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false); // 👈 thêm
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return; // ⛔ tránh submit liên tiếp
+    setLoading(true);
     setMessage('');
+
     try {
-      // 👇 endpoint linh hoạt hơn
       let endpoint;
       if (isLogin) {
         endpoint = isAdmin ? '/auth/admin/login' : '/auth/login';
@@ -25,12 +28,12 @@ export default function AuthModal({ onClose }) {
         endpoint = '/auth/register';
       }
 
-      const { data } = await axios.post(`http://localhost:5000/api${endpoint}`, form);
+      const { data } = await axios.post(`http://localhost:5000/api${endpoint}`, form, {
+        headers: { 'Content-Type': 'application/json' }
+      });
 
       if (data.success && data.token) {
         login(data.token, data.role);
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
         onClose();
       } else if (data.success) {
         setMessage('Đăng ký thành công! Hãy đăng nhập.');
@@ -38,6 +41,8 @@ export default function AuthModal({ onClose }) {
       }
     } catch (err) {
       setMessage(err.response?.data?.message || 'Lỗi kết nối máy chủ.');
+    } finally {
+      setLoading(false); // 👈 bật lại khi xong
     }
   };
 
@@ -78,8 +83,13 @@ export default function AuthModal({ onClose }) {
           <button
             type="submit"
             className="submit-btn"
+            disabled={loading} // 👈 disable khi đang gửi request
           >
-            {isLogin ? (isAdmin ? 'Đăng nhập Admin' : 'Đăng nhập') : 'Đăng ký'}
+            {loading
+              ? 'Đang xử lý...' // 👈 hiển thị trạng thái loading
+              : isLogin
+                ? (isAdmin ? 'Đăng nhập Admin' : 'Đăng nhập')
+                : 'Đăng ký'}
           </button>
         </form>
 
