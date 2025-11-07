@@ -1,4 +1,3 @@
-// frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
@@ -6,41 +5,36 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  // Thay thế bằng logic lấy Token thực tế sau khi Login
-  const [authToken, setAuthToken] = useState(
-    'MOCK_ADMIN_TOKEN_HERE' 
-    // Ghi chú: Bạn PHẢI thay thế chuỗi này bằng một token JWT hợp lệ 
-    // sau khi đăng nhập Admin (POST /api/auth/login) để test CRUD thành công.
-  );
-  
-  // Vai trò được gắn trực tiếp vào Token
-  const [userRole, setUserRole] = useState('admin'); 
+  // Lấy từ localStorage nếu có (đảm bảo đăng nhập vẫn giữ khi refresh)
+  const [authToken, setAuthToken] = useState(localStorage.getItem('token') || null);
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'user');
 
-  // Hàm để lấy headers (cần cho mọi yêu cầu CRUD)
-  const authHeaders = {
-    Authorization: `Bearer ${authToken}`,
-    'Content-Type': 'application/json',
-  };
+  // Header có token để gọi API
+  const authHeaders = authToken
+    ? {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      }
+    : { 'Content-Type': 'application/json' };
 
+  // 🔐 Login (được gọi sau khi backend trả token)
   const login = (token, role) => {
     setAuthToken(token);
     setUserRole(role);
+    localStorage.setItem('token', token);
+    localStorage.setItem('role', role);
   };
-  
+
+  // 🚪 Logout
   const logout = () => {
     setAuthToken(null);
     setUserRole('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
   };
 
-
   return (
-    <AuthContext.Provider value={{ 
-      authToken, 
-      userRole, 
-      authHeaders,
-      login, 
-      logout 
-    }}>
+    <AuthContext.Provider value={{ authToken, userRole, authHeaders, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,15 +5,25 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   const { email, password, username } = req.body;
-  if (!email || !password || !username) return res.status(400).json({ message: "Thiếu thông tin." });
+  if (!email || !password || !username)
+    return res.status(400).json({ message: "Thiếu thông tin." });
+
   try {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
-    const sql = `INSERT INTO Users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, username, email, role;`;
+
+    // 👇 Thêm role mặc định
+    const sql = `
+      INSERT INTO Users (email, password_hash, username, role)
+      VALUES ($1, $2, $3, 'user')
+      RETURNING id, username, email, role;
+    `;
     const result = await db.query(sql, [email, password_hash, username]);
+
     res.status(201).json({ success: true, user: result.rows[0] });
   } catch (error) {
-    if (error.code === '23505') return res.status(400).json({ message: "Email đã tồn tại." });
+    if (error.code === '23505')
+      return res.status(400).json({ message: "Email đã tồn tại." });
     console.error(error);
     res.status(500).json({ message: "Lỗi server khi đăng ký." });
   }
@@ -37,5 +47,37 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi server khi đăng nhập." });
+  }
+};
+
+exports.adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Kiểm tra tài khoản có role = 'admin'
+    const userResult = await db.query(
+      'SELECT * FROM Users WHERE email = $1 AND role = $2',
+      [email, 'admin']
+    );
+    const admin = userResult.rows[0];
+
+    if (!admin || !(await bcrypt.compare(password, admin.password_hash))) {
+      return res.status(400).json({ message: "Tài khoản hoặc mật khẩu admin không đúng." });
+    }
+
+    const token = jwt.sign(
+      { id: admin.id, role: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      token,
+      role: 'admin',
+      username: admin.username
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi đăng nhập admin." });
   }
 };

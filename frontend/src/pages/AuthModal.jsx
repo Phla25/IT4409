@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import './AuthModal.css'; // 👈 thêm dòng này
+import './AuthModal.css';
 
 export default function AuthModal({ onClose }) {
   const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false); // 👈 thêm
   const [form, setForm] = useState({ email: '', password: '', username: '' });
   const [message, setMessage] = useState('');
 
@@ -16,7 +17,14 @@ export default function AuthModal({ onClose }) {
     e.preventDefault();
     setMessage('');
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      // 👇 endpoint linh hoạt hơn
+      let endpoint;
+      if (isLogin) {
+        endpoint = isAdmin ? '/auth/admin/login' : '/auth/login';
+      } else {
+        endpoint = '/auth/register';
+      }
+
       const { data } = await axios.post(`http://localhost:5000/api${endpoint}`, form);
 
       if (data.success && data.token) {
@@ -37,7 +45,7 @@ export default function AuthModal({ onClose }) {
     <div className="auth-modal-overlay">
       <div className="auth-modal">
         <button className="close-btn" onClick={onClose}>×</button>
-        <h2>{isLogin ? 'Đăng nhập' : 'Đăng ký'}</h2>
+        <h2>{isLogin ? (isAdmin ? 'Đăng nhập Admin' : 'Đăng nhập') : 'Đăng ký'}</h2>
 
         <form onSubmit={handleSubmit}>
           {!isLogin && (
@@ -66,20 +74,24 @@ export default function AuthModal({ onClose }) {
             onChange={handleChange}
             required
           />
-            <button
-                type="submit"
-                className="w-full mt-3 py-3 text-white font-semibold rounded-xl 
-                            bg-gradient-to-r from-blue-600 to-indigo-500
-                            shadow-lg shadow-blue-500/30 
-                            hover:from-indigo-500 hover:to-blue-600
-                            transform hover:-translate-y-0.5 
-                            transition-all duration-200"
-                >
-                {isLogin ? 'Đăng nhập' : 'Đăng ký'}
-            </button>
+
+          <button
+            type="submit"
+            className="submit-btn"
+          >
+            {isLogin ? (isAdmin ? 'Đăng nhập Admin' : 'Đăng nhập') : 'Đăng ký'}
+          </button>
         </form>
 
         {message && <p className="error">{message}</p>}
+
+        {isLogin && (
+          <p className="toggle-admin">
+            <span onClick={() => setIsAdmin(!isAdmin)}>
+              {isAdmin ? '← Quay lại đăng nhập người dùng' : 'Đăng nhập với tư cách Admin'}
+            </span>
+          </p>
+        )}
 
         <p className="toggle">
           {isLogin ? (
