@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
 // ... (các hằng số, Component ChangeView, và code khác giữ nguyên) ...
 
 const hanoiPosition = [21.028511, 105.854199];
-const INITIAL_ZOOM = 13.5;
+const INITIAL_ZOOM = 15   ;
 
 const ChangeView = ({ center, zoom }) => {
   const map = useMap();
