@@ -80,7 +80,7 @@ body {
   border-radius: 16px;
   margin: 40px auto;
   max-width: 1100px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   color: #fff;
 }
 
@@ -110,7 +110,8 @@ body {
   gap: 10px;
 }
 
-.crud-form input, .crud-form textarea {
+.crud-form input,
+.crud-form textarea {
   background: #1f2125;
   color: white;
   border: 1px solid #374151;
@@ -119,11 +120,11 @@ body {
   font-size: 14px;
 }
 
-
-.crud-form input:focus, .crud-form textarea:focus {
+.crud-form input:focus,
+.crud-form textarea:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 6px rgba(59,130,246,0.4);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
 }
 
 .crud-checkbox {
@@ -159,7 +160,11 @@ body {
   background: #dc2626;
 }
 
-.btn-success, .btn-warning, .btn-gray, .btn-blue, .btn-red {
+.btn-success,
+.btn-warning,
+.btn-gray,
+.btn-blue,
+.btn-red {
   border: none;
   color: #fff;
   padding: 10px 20px;
@@ -169,8 +174,11 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-success:hover, .btn-warning:hover, .btn-gray:hover,
-.btn-blue:hover, .btn-red:hover {
+.btn-success:hover,
+.btn-warning:hover,
+.btn-gray:hover,
+.btn-blue:hover,
+.btn-red:hover {
   transform: translateY(-2px);
   opacity: 0.9;
 }
@@ -185,39 +193,60 @@ body {
   margin-top: 15px;
 }
 
+/* ===== CRUD CARD ===== */
 .crud-card {
-  background: #1f2125;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-left-width: 6px;
   border-radius: 10px;
   padding: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   transition: all 0.3s ease;
-}
-
-.crud-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 10px rgba(59,130,246,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .crud-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--card-header-color);
+  font-weight: 600;
+}
+
+/* Status-based left strip */
+.crud-card.approved {
+  border-left-color: #16a34a;
+}
+
+.crud-card.pending {
+  border-left-color: #f59e0b;
+}
+
+/* Hover effect */
+.crud-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* Inner spacing */
+.crud-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  justify-content: flex-start;
 }
 
 .status-approved {
-  color: #22c55e;
+  color: #16a34a;
   font-weight: 600;
 }
 
 .status-pending {
-  color: #f87171;
+  color: #f59e0b;
   font-weight: 600;
-}
-
-.crud-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
 }
 
 /* ----------- ANIMATIONS ----------- */
@@ -238,7 +267,7 @@ body {
 
 /* ----------- TEXTAREA FULL WIDTH ----------- */
 .crud-textarea {
-  grid-column: 1 / -1; /* chiếm hết chiều ngang grid */
+  grid-column: 1 / -1;
   width: 100%;
   resize: vertical;
   min-height: 120px;
@@ -264,7 +293,7 @@ body {
   }
 
   .crud-grid {
-    grid-template-columns: 1fr; /* 1 cột thay vì 2 cột */
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
@@ -274,51 +303,6 @@ body {
 
   .crud-actions button {
     width: 100%;
-  }
-
-  /* --- CARD --- */
-  .crud-card {
-    background: var(--card-bg);
-    color: var(--text-color);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    transition: background 0.3s ease, color 0.3s ease, transform 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    border-left: 4px solid transparent;
-  }
-
-  /* Hover nhẹ */
-  .crud-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
-  }
-
-  /* Trạng thái duyệt */
-  .status-approved {
-    color: #16a34a;
-    font-weight: 600;
-  }
-  .status-pending {
-    color: #f59e0b;
-    font-weight: 600;
-  }
-
-  /* Màu viền bên trái theo trạng thái */
-  .crud-card.approved {
-    border-left-color: #16a34a;
-  }
-  .crud-card.pending {
-    border-left-color: #f59e0b;
-  }
-
-  /* Áp dụng màu nền động theo theme */
-  :root {
-    --card-bg: #ffffff; /* trắng khi light */
-  }
-
-  .dark-mode {
-    --card-bg: #2a2d33; /* tối khi dark */
   }
 
   .crud-title {
@@ -332,45 +316,44 @@ body {
 
 /* ===== Theme System ===== */
 :root {
-  /* 🌞 LIGHT MODE */
   --bg-color: #f9fafb;
-  --text-color: #0f172a; /* đậm hơn */
+  --text-color: #0f172a;
   --card-bg: #ffffff;
+  --card-border: #000000;
+  --card-header-color: #000000;
   --input-bg: #f3f4f6;
   --input-border: #cbd5e1;
-  --muted-text: #334155; /* chữ phụ đậm hơn */
+  --muted-text: #334155;
 }
 
 .dark-mode {
-  /* 🌙 DARK MODE */
   --bg-color: #1e1f24;
   --text-color: #f9fafb;
   --card-bg: #2a2d33;
+  --card-border: #ffffff;
+  --card-header-color: #ffffff;
   --input-bg: #1f2125;
   --input-border: #374151;
   --muted-text: #9ca3af;
 }
 
-/* Áp dụng màu chung */
+/* Apply shared theme colors */
 body {
   background: var(--bg-color);
   color: var(--text-color);
-  font-weight: 500; /* chữ trung bình đậm hơn một chút */
+  font-weight: 500;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Tiêu đề đậm hơn khi nền sáng */
 h1, h2, h3, h4, h5 {
   color: var(--text-color);
   font-weight: 700;
 }
 
-/* Chữ phụ hoặc mô tả */
 p, span, label {
   color: var(--muted-text);
 }
 
-/* Ô nhập liệu hiển thị rõ hơn */
 .crud-form input,
 .crud-form textarea {
   background: var(--input-bg);
@@ -379,18 +362,9 @@ p, span, label {
   font-weight: 500;
 }
 
-/* Container */
 .crud-container {
   background: var(--card-bg);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-
-.crud-form input,
-.crud-form textarea {
-  background: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--text-color);
 }
 
 /* 🌙 Nút chuyển chế độ */
@@ -416,6 +390,7 @@ p, span, label {
   background: #1d4ed8;
 }
 
+/* Pagination & search */
 .pagination {
   display: flex;
   justify-content: center;
@@ -449,28 +424,6 @@ p, span, label {
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid #ccc;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.pagination button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
 }
 
 .location-address {
