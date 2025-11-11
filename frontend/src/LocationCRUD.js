@@ -1,5 +1,5 @@
 // frontend/src/LocationCRUD.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import * as XLSX from 'xlsx';
@@ -15,7 +15,6 @@ const LocationCRUD = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentLocationId, setCurrentLocationId] = useState(null);
-
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -29,6 +28,14 @@ const LocationCRUD = () => {
     is_approved: false,
   });
 
+  // ----------------- PHÂN TRANG -----------------
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // ----------------- TÌM KIẾM + LỌC -----------------
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedWard, setSelectedWard] = useState('');
+
   // ----------------- FETCH LOCATIONS -----------------
   const fetchLocations = useCallback(async () => {
     if (userRole !== 'admin') return;
@@ -37,6 +44,7 @@ const LocationCRUD = () => {
     try {
       const response = await axios.get(ADMIN_API_URL, { headers: authHeaders });
       setLocations(response.data.data);
+      setCurrentPage(1);
     } catch (err) {
       setError('Không thể tải danh sách địa điểm. Hãy kiểm tra token hoặc server.');
     } finally {
@@ -158,6 +166,33 @@ const LocationCRUD = () => {
     }
   };
 
+  // ----------------- LỌC + PHÂN TRANG -----------------
+  const uniqueWards = useMemo(
+    () => [...new Set(locations.map((l) => l.district).filter(Boolean))],
+    [locations]
+  );
+
+  const filteredLocations = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return locations.filter((loc) => {
+      const matchesName = loc.name?.toLowerCase().includes(term);
+      const matchesWard = selectedWard ? loc.district === selectedWard : true;
+      return matchesName && matchesWard;
+    });
+  }, [locations, searchTerm, selectedWard]);
+
+  const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentLocations = filteredLocations.slice(startIndex, startIndex + itemsPerPage);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedWard]);
+
   // ----------------- RENDER -----------------
   if (userRole !== 'admin') return null;
 
@@ -236,38 +271,51 @@ const LocationCRUD = () => {
         </button>
       </div>
 
+      {/* THANH TÌM KIẾM + FILTER */}
+      <div className="crud-search" style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <input
+          type="text"
+          placeholder="🔍 Tìm theo tên địa điểm..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select value={selectedWard} onChange={(e) => setSelectedWard(e.target.value)}>
+          <option value="">-- Lọc theo Phường/Xã --</option>
+          {uniqueWards.map((ward, idx) => (
+            <option key={idx} value={ward}>
+              {ward}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* DANH SÁCH ĐỊA ĐIỂM */}
-      <h3 className="crud-subtitle">Danh sách Địa điểm ({locations.length})</h3>
+      <h3 className="crud-subtitle">
+        Danh sách Địa điểm ({filteredLocations.length})
+      </h3>
       <div className="crud-list">
         {loading ? (
           <p>Đang tải...</p>
-        ) : locations.length === 0 ? (
-          <p>Không có dữ liệu.</p>
+        ) : currentLocations.length === 0 ? (
+          <p>Không có dữ liệu phù hợp.</p>
         ) : (
-          locations.map((loc) => (
+          currentLocations.map((loc) => (
             <div
               key={loc.id}
               className={`crud-card ${loc.is_approved ? 'approved' : 'pending'}`}
             >
               <div className="crud-card-header">
                 <strong>{loc.name}</strong>
-                <span
-                  className={
-                    loc.is_approved ? 'status-approved' : 'status-pending'
-                  }
-                >
+                <span className={loc.is_approved ? 'status-approved' : 'status-pending'}>
                   {loc.is_approved ? 'ĐÃ DUYỆT' : 'CHƯA DUYỆT'}
                 </span>
               </div>
-              <p>{loc.address}</p>
+              <p className="location-address">{loc.address}</p>
               <div className="crud-card-actions">
                 <button onClick={() => handleEdit(loc)} className="btn-blue">
                   Sửa
                 </button>
-                <button
-                  onClick={() => handleDelete(loc.id)}
-                  className="btn-red"
-                >
+                <button onClick={() => handleDelete(loc.id)} className="btn-red">
                   Xóa
                 </button>
               </div>
@@ -275,6 +323,21 @@ const LocationCRUD = () => {
           ))
         )}
       </div>
+
+      {/* PHÂN TRANG */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
+            Trang trước
+          </button>
+          <span>
+            Trang {currentPage} / {totalPages}
+          </span>
+          <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
+            Trang sau
+          </button>
+        </div>
+      )}
     </div>
   );
 };
