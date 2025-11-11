@@ -276,8 +276,49 @@ body {
     width: 100%;
   }
 
+  /* --- CARD --- */
   .crud-card {
-    padding: 12px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid transparent;
+  }
+
+  /* Hover nhẹ */
+  .crud-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  }
+
+  /* Trạng thái duyệt */
+  .status-approved {
+    color: #16a34a;
+    font-weight: 600;
+  }
+  .status-pending {
+    color: #f59e0b;
+    font-weight: 600;
+  }
+
+  /* Màu viền bên trái theo trạng thái */
+  .crud-card.approved {
+    border-left-color: #16a34a;
+  }
+  .crud-card.pending {
+    border-left-color: #f59e0b;
+  }
+
+  /* Áp dụng màu nền động theo theme */
+  :root {
+    --card-bg: #ffffff; /* trắng khi light */
+  }
+
+  .dark-mode {
+    --card-bg: #2a2d33; /* tối khi dark */
   }
 
   .crud-title {
