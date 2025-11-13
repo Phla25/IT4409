@@ -275,7 +275,7 @@ const LocationCRUD = () => {
       <div className="crud-search" style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
         <input
           type="text"
-          placeholder="🔍 Tìm theo tên địa điểm..."
+          placeholder="Tìm theo tên địa điểm..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
