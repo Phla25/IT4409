@@ -22,7 +22,13 @@ const ADMIN_ZOOM = 13;
 const ChangeView = ({ center, zoom }) => {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, zoom);
+    if (!map || !center) return;
+    // Bọc try-catch để tránh lỗi nếu map chưa sẵn sàng
+    try {
+      map.setView(center, zoom);
+    } catch (e) {
+      console.warn("Map view update error:", e);
+    }
   }, [map, center, zoom]);
   return null;
 };
@@ -136,7 +142,9 @@ const LeafletMapComponent = () => {
         </button>
       )}
 
+      {/* --- FIX QUAN TRỌNG: Thêm prop key --- */}
       <MapContainer
+        key={isAdminMode ? "admin-map" : "user-map"} 
         center={mapCenter}
         zoom={isAdminMode ? ADMIN_ZOOM : USER_ZOOM}
         scrollWheelZoom
@@ -146,14 +154,14 @@ const LeafletMapComponent = () => {
         <ChangeView center={mapCenter} zoom={isAdminMode ? ADMIN_ZOOM : USER_ZOOM} />
 
         <TileLayer
-          attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
+          attribution='© <a href="https://maps.google.com">Google Maps</a>'
           url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
           maxZoom={20}
           maxNativeZoom={17}
         />
 
-        {/* Marker vị trí hiện tại của user */}
-        {userLocation.loaded && userLocation.coordinates.lat && (
+        {/* Logic ẩn vị trí khi ở Admin Mode */}
+        {!isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
           <>
             <Marker position={[userLocation.coordinates.lat, userLocation.coordinates.lng]}>
               <Popup>Vị trí hiện tại của bạn</Popup>
@@ -166,7 +174,6 @@ const LeafletMapComponent = () => {
           </>
         )}
 
-        {/* Các location: không hiển thị popup */}
         {locations.map((loc) => {
           const lat = parseFloat(loc.latitude);
           const lng = parseFloat(loc.longitude);
@@ -182,7 +189,6 @@ const LeafletMapComponent = () => {
         })}
       </MapContainer>
 
-      {/* Modal chi tiết */}
       {selectedLocation && (
         <div
           className={`detail-modal ${selectedLocation.fadeOut ? 'fade-out' : ''}`}
@@ -205,6 +211,8 @@ const LeafletMapComponent = () => {
               </p>
             )}
             {selectedLocation.description && <p>{selectedLocation.description}</p>}
+            
+            {/* Chỉ hiện khoảng cách khi ở User Mode */}
             {!isAdminMode && userLocation.loaded && (
               <p>
                 <strong>Khoảng cách tới bạn:</strong> {getDistanceToUser(selectedLocation)} km

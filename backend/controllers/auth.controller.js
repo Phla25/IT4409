@@ -39,14 +39,30 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
+    // 1. Tìm user theo email
     const userResult = await db.query('SELECT * FROM Users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    // 2. Kiểm tra user có tồn tại không
+    if (!user) {
+      return res.status(400).json({ message: "Email hoặc mật khẩu không đúng." });
+    }
+
+    // 🔥 FIX QUAN TRỌNG: Kiểm tra Role
+    // Nếu role là 'admin' (hoặc bất cứ cái gì không phải 'user'), chặn lại ngay.
+    if (user.role !== 'user') {
+      return res.status(403).json({ 
+        message: "Tài khoản này có quyền Admin. Vui lòng sang trang đăng nhập Quản trị viên." 
+      });
+    }
+
+    // 3. Kiểm tra mật khẩu
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
       return res.status(400).json({ message: "Email hoặc mật khẩu không đúng." });
     }
     
-    // Tạo JWT
+    // 4. Tạo JWT (Giữ nguyên)
     const payload = { id: user.id, role: user.role };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
