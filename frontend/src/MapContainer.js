@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
 import axios from 'axios';
-import useGeolocation from './hooks/useGeolocation';
-import { useAuth } from './context/AuthContext';
-import { calculateDistance } from './utils/distance';
+import useGeolocation from '../hooks/useGeolocation';
+import { useAuth } from '../context/AuthContext';
+import { calculateDistance } from '../utils/distance';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -23,7 +23,6 @@ const ChangeView = ({ center, zoom }) => {
   const map = useMap();
   useEffect(() => {
     if (!map || !center) return;
-    // Bọc try-catch để tránh lỗi nếu map chưa sẵn sàng
     try {
       map.setView(center, zoom);
     } catch (e) {
@@ -34,7 +33,12 @@ const ChangeView = ({ center, zoom }) => {
 };
 
 const LeafletMapComponent = () => {
-  const { userRole } = useAuth();
+  // Bảo vệ destructuring: Nếu useAuth() trả về null/undefined thì lấy object rỗng
+  const authContext = useAuth() || {};
+  const { userRole } = authContext;
+  
+  // Logic: Chỉ là Admin khi userRole chính xác là 'admin'
+  // Khách vãng lai (chưa đăng nhập) -> userRole = undefined -> isAdmin = false
   const isAdmin = userRole === 'admin';
 
   const [locations, setLocations] = useState([]);
@@ -43,10 +47,16 @@ const LeafletMapComponent = () => {
   const userLocation = useGeolocation();
   const [mapCenter, setMapCenter] = useState(hanoiPosition);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  
+  // State chế độ hiển thị
   const [isAdminMode, setIsAdminMode] = useState(false);
 
+  // --- SỬA LOGIC TẠI ĐÂY ---
+  // Đồng bộ trạng thái: 
+  // - Nếu là Admin -> Bật AdminMode (hoặc giữ nguyên nếu đang bật)
+  // - Nếu KHÔNG phải Admin (User thường hoặc Khách) -> Ép buộc tắt AdminMode
   useEffect(() => {
-    if (isAdmin) setIsAdminMode(true);
+    setIsAdminMode(isAdmin);
   }, [isAdmin]);
 
   const debounce = (func, delay) => {
@@ -61,15 +71,19 @@ const LeafletMapComponent = () => {
     return debounce(async (lat, lng, adminMode) => {
       try {
         setLoading(true);
+        // LƯU Ý: Endpoint backend cần set là Public (không yêu cầu token)
+        // Nếu backend yêu cầu token cho /nearby, khách vãng lai sẽ bị lỗi 401
         const url = adminMode
           ? 'http://localhost:5000/api/locations'
           : `http://localhost:5000/api/locations/nearby?lat=${lat}&lng=${lng}&radius=5`;
+        
         const response = await axios.get(url);
         setLocations(response.data.data || response.data);
         setError(null);
       } catch (err) {
         console.error('Lỗi khi tải địa điểm:', err);
-        setError('Không thể tải dữ liệu địa điểm.');
+        // Không hiển thị lỗi quá gắt với người dùng
+        // setError('Không thể tải dữ liệu địa điểm.'); 
       } finally {
         setLoading(false);
       }
@@ -122,6 +136,7 @@ const LeafletMapComponent = () => {
     <div style={{ height: '800px', width: '100%', position: 'relative' }}>
       {error && <p style={{ color: 'red', padding: '10px' }}>{error}</p>}
 
+      {/* Chỉ hiển thị nút chuyển đổi nếu thực sự là Admin */}
       {isAdmin && (
         <button
           onClick={handleToggleMode}
@@ -142,7 +157,6 @@ const LeafletMapComponent = () => {
         </button>
       )}
 
-      {/* --- FIX QUAN TRỌNG: Thêm prop key --- */}
       <MapContainer
         key={isAdminMode ? "admin-map" : "user-map"} 
         center={mapCenter}
@@ -160,7 +174,7 @@ const LeafletMapComponent = () => {
           maxNativeZoom={17}
         />
 
-        {/* Logic ẩn vị trí khi ở Admin Mode */}
+        {/* Logic hiển thị cho User Mode (Bao gồm cả Khách vãng lai) */}
         {!isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
           <>
             <Marker position={[userLocation.coordinates.lat, userLocation.coordinates.lng]}>
@@ -212,7 +226,7 @@ const LeafletMapComponent = () => {
             )}
             {selectedLocation.description && <p>{selectedLocation.description}</p>}
             
-            {/* Chỉ hiện khoảng cách khi ở User Mode */}
+            {/* Hiển thị khoảng cách cho cả User và Khách */}
             {!isAdminMode && userLocation.loaded && (
               <p>
                 <strong>Khoảng cách tới bạn:</strong> {getDistanceToUser(selectedLocation)} km
@@ -225,4 +239,4 @@ const LeafletMapComponent = () => {
   );
 };
 
-export default LeafletMapComponent;
+export default LeafletMapComponent; 
