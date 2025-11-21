@@ -1,40 +1,41 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  // Lấy từ localStorage nếu có (đảm bảo đăng nhập vẫn giữ khi refresh)
-  const [authToken, setAuthToken] = useState(localStorage.getItem('token') || null);
-  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'user');
+  const [authToken, setAuthToken] = useState(localStorage.getItem('token'));
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'guest');
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
 
-  // Header có token để gọi API
-  const authHeaders = authToken
-    ? {
-        Authorization: `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-      }
-    : { 'Content-Type': 'application/json' };
-
-  // 🔐 Login (được gọi sau khi backend trả token)
-  const login = (token, role) => {
+  // Hàm Login: Nhận data từ response backend
+  const login = (token, role, userData) => {
     setAuthToken(token);
     setUserRole(role);
+    setUser(userData);
+
     localStorage.setItem('token', token);
     localStorage.setItem('role', role);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  // 🚪 Logout
+  // Hàm Logout
   const logout = () => {
     setAuthToken(null);
-    setUserRole('user');
+    setUserRole('guest');
+    setUser(null);
+
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('user');
+    
+    // Optional: Reload trang để clear state sạch sẽ
+    window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ authToken, userRole, authHeaders, login, logout }}>
+    <AuthContext.Provider value={{ authToken, userRole, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

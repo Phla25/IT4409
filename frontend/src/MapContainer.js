@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
-import axios from 'axios';
-import useGeolocation from '../hooks/useGeolocation';
-import { useAuth } from '../context/AuthContext';
-import { calculateDistance } from '../utils/distance';
+import API from './api'; // Dùng instance API chung
+import useGeolocation from './hooks/useGeolocation'; // Giữ nguyên file hook của bạn
+import { useAuth } from './context/AuthContext';
+import { calculateDistance } from './utils/distance';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// ⚙️ Fix default icon
+// Fix icon Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -16,227 +16,107 @@ L.Icon.Default.mergeOptions({
 });
 
 const hanoiPosition = [21.028511, 105.854199];
-const USER_ZOOM = 15;
-const ADMIN_ZOOM = 13;
-
-const ChangeView = ({ center, zoom }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (!map || !center) return;
-    try {
-      map.setView(center, zoom);
-    } catch (e) {
-      console.warn("Map view update error:", e);
-    }
-  }, [map, center, zoom]);
-  return null;
-};
 
 const LeafletMapComponent = () => {
-  // Bảo vệ destructuring: Nếu useAuth() trả về null/undefined thì lấy object rỗng
-  const authContext = useAuth() || {};
-  const { userRole } = authContext;
-  
-  // Logic: Chỉ là Admin khi userRole chính xác là 'admin'
-  // Khách vãng lai (chưa đăng nhập) -> userRole = undefined -> isAdmin = false
+  const { userRole } = useAuth();
   const isAdmin = userRole === 'admin';
-
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const userLocation = useGeolocation();
-  const [mapCenter, setMapCenter] = useState(hanoiPosition);
-  const [selectedLocation, setSelectedLocation] = useState(null);
   
-  // State chế độ hiển thị
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [isAdminMode, setIsAdminMode] = useState(false); // Chế độ xem của Admin
+  const [radius, setRadius] = useState(5); // Bán kính tìm kiếm (km)
 
-  // --- SỬA LOGIC TẠI ĐÂY ---
-  // Đồng bộ trạng thái: 
-  // - Nếu là Admin -> Bật AdminMode (hoặc giữ nguyên nếu đang bật)
-  // - Nếu KHÔNG phải Admin (User thường hoặc Khách) -> Ép buộc tắt AdminMode
+  const userLocation = useGeolocation();
+  const [selectedLocation, setSelectedLocation] = useState(null);
+
+  // Khi role thay đổi, cập nhật chế độ
   useEffect(() => {
     setIsAdminMode(isAdmin);
   }, [isAdmin]);
 
-  const debounce = (func, delay) => {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), delay);
-    };
-  };
-
-  const debouncedFetchLocations = useMemo(() => {
-    return debounce(async (lat, lng, adminMode) => {
-      try {
-        setLoading(true);
-        // LƯU Ý: Endpoint backend cần set là Public (không yêu cầu token)
-        // Nếu backend yêu cầu token cho /nearby, khách vãng lai sẽ bị lỗi 401
-        const url = adminMode
-          ? 'http://localhost:5000/api/locations'
-          : `http://localhost:5000/api/locations/nearby?lat=${lat}&lng=${lng}&radius=5`;
-        
-        const response = await axios.get(url);
-        setLocations(response.data.data || response.data);
-        setError(null);
-      } catch (err) {
-        console.error('Lỗi khi tải địa điểm:', err);
-        // Không hiển thị lỗi quá gắt với người dùng
-        // setError('Không thể tải dữ liệu địa điểm.'); 
-      } finally {
-        setLoading(false);
+  // Hàm fetch dữ liệu
+  const fetchLocations = async () => {
+    try {
+      let url = '/locations'; // Mặc định lấy list public
+      
+      if (isAdminMode) {
+        // Admin: Lấy danh sách quản trị (bao gồm chưa duyệt)
+        url = '/locations/admin/all';
+      } else if (userLocation.loaded && userLocation.coordinates.lat) {
+        // User/Guest: Lấy theo bán kính gần đây
+        const { lat, lng } = userLocation.coordinates;
+        url = `/locations/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
       }
-    }, 1000);
-  }, []);
 
+      const res = await API.get(url);
+      setLocations(res.data.data || []);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
+
+  // Gọi API khi dependency thay đổi
   useEffect(() => {
-    if (isAdminMode) {
-      debouncedFetchLocations(null, null, true);
-      setMapCenter(hanoiPosition);
-      return;
+    // Nếu là Admin mode -> gọi luôn
+    // Nếu là User mode -> chờ có vị trí mới gọi
+    if (isAdminMode || (userLocation.loaded && !userLocation.error)) {
+      fetchLocations();
     }
-
-    if (!userLocation.loaded) return;
-
-    const { lat, lng } = userLocation.coordinates;
-    if (lat && lng) {
-      setMapCenter([lat, lng]);
-      debouncedFetchLocations(lat, lng, false);
-    } else if (userLocation.error) {
-      setLoading(false);
-      setError(`Không thể xác định vị trí: ${userLocation.error}`);
-    }
-  }, [
-    userLocation.loaded,
-    userLocation.coordinates,
-    userLocation.error,
-    isAdminMode,
-    debouncedFetchLocations,
-  ]);
-
-  const handleToggleMode = () => {
-    if (!isAdmin) return;
-    setIsAdminMode((prev) => !prev);
-  };
-
-  if (loading) return <p>Đang tải dữ liệu bản đồ...</p>;
-
-  const getDistanceToUser = (loc) => {
-    if (!userLocation.loaded || !userLocation.coordinates.lat) return null;
-    return calculateDistance(
-      userLocation.coordinates.lat,
-      userLocation.coordinates.lng,
-      parseFloat(loc.latitude),
-      parseFloat(loc.longitude)
-    ).toFixed(2);
-  };
+  }, [isAdminMode, userLocation.loaded, radius]);
 
   return (
-    <div style={{ height: '800px', width: '100%', position: 'relative' }}>
-      {error && <p style={{ color: 'red', padding: '10px' }}>{error}</p>}
+    <div style={{ position: 'relative', height: '80vh', width: '100%' }}>
+      
+      {/* Panel điều khiển (Filter Radius) */}
+      {!isAdminMode && (
+        <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, background: 'white', padding: 10, borderRadius: 5 }}>
+          <label>Tìm bán kính: {radius} km</label>
+          <input 
+            type="range" min="1" max="20" value={radius} 
+            onChange={(e) => setRadius(e.target.value)} 
+          />
+        </div>
+      )}
 
-      {/* Chỉ hiển thị nút chuyển đổi nếu thực sự là Admin */}
+      {/* Nút Toggle Admin Mode */}
       {isAdmin && (
         <button
-          onClick={handleToggleMode}
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            zIndex: 999,
-            padding: '8px 12px',
-            borderRadius: '8px',
-            background: isAdminMode ? '#d9534f' : '#0275d8',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-          }}
+          onClick={() => setIsAdminMode(!isAdminMode)}
+          style={{ position: 'absolute', top: 60, right: 10, zIndex: 1000 }}
         >
-          {isAdminMode ? 'Admin Mode' : 'User Mode'}
+          {isAdminMode ? "Switch to User View" : "Switch to Admin View"}
         </button>
       )}
 
-      <MapContainer
-        key={isAdminMode ? "admin-map" : "user-map"} 
-        center={mapCenter}
-        zoom={isAdminMode ? ADMIN_ZOOM : USER_ZOOM}
-        scrollWheelZoom
-        style={{ height: '100%', width: '100%' }}
-        maxZoom={20}
-      >
-        <ChangeView center={mapCenter} zoom={isAdminMode ? ADMIN_ZOOM : USER_ZOOM} />
+      <MapContainer center={hanoiPosition} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
 
-        <TileLayer
-          attribution='© <a href="https://maps.google.com">Google Maps</a>'
-          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-          maxZoom={20}
-          maxNativeZoom={17}
-        />
-
-        {/* Logic hiển thị cho User Mode (Bao gồm cả Khách vãng lai) */}
-        {!isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
+        {/* Marker vị trí người dùng */}
+        {userLocation.coordinates.lat && (
           <>
             <Marker position={[userLocation.coordinates.lat, userLocation.coordinates.lng]}>
-              <Popup>Vị trí hiện tại của bạn</Popup>
+              <Popup>Bạn đang ở đây</Popup>
             </Marker>
-            <Circle
-              center={[userLocation.coordinates.lat, userLocation.coordinates.lng]}
-              radius={1000}
-              pathOptions={{ color: 'blue', fillColor: 'lightblue', fillOpacity: 0.25 }}
-            />
+            <Circle center={[userLocation.coordinates.lat, userLocation.coordinates.lng]} radius={radius * 1000} />
           </>
         )}
 
-        {locations.map((loc) => {
-          const lat = parseFloat(loc.latitude);
-          const lng = parseFloat(loc.longitude);
-          if (isNaN(lat) || isNaN(lng)) return null;
-          return (
-            <Marker
-              key={loc.id}
-              position={[lat, lng]}
-              title={loc.name}
-              eventHandlers={{ click: () => setSelectedLocation(loc) }}
-            />
-          );
-        })}
+        {/* Marker các địa điểm */}
+        {locations.map(loc => (
+          <Marker 
+            key={loc.id} 
+            position={[loc.latitude, loc.longitude]}
+            eventHandlers={{ click: () => setSelectedLocation(loc) }}
+          >
+            <Popup>
+               <b>{loc.name}</b> <br/>
+               {loc.address} <br/>
+               {isAdminMode && (loc.is_approved ? "✅ Đã duyệt" : "❌ Chưa duyệt")}
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
-
-      {selectedLocation && (
-        <div
-          className={`detail-modal ${selectedLocation.fadeOut ? 'fade-out' : ''}`}
-          onAnimationEnd={() => {
-            if (selectedLocation.fadeOut) setSelectedLocation(null);
-          }}
-        >
-          <div className={`detail-content ${selectedLocation.fadeOut ? 'fade-out-content' : ''}`}>
-            <button
-              className="detail-close"
-              onClick={() => setSelectedLocation((prev) => ({ ...prev, fadeOut: true }))}
-            >
-              ×
-            </button>
-
-            <h2>{selectedLocation.name}</h2>
-            {selectedLocation.address && (
-              <p>
-                <strong>Địa chỉ:</strong> {selectedLocation.address}
-              </p>
-            )}
-            {selectedLocation.description && <p>{selectedLocation.description}</p>}
-            
-            {/* Hiển thị khoảng cách cho cả User và Khách */}
-            {!isAdminMode && userLocation.loaded && (
-              <p>
-                <strong>Khoảng cách tới bạn:</strong> {getDistanceToUser(selectedLocation)} km
-              </p>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default LeafletMapComponent; 
+export default LeafletMapComponent;

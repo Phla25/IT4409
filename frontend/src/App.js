@@ -1,74 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+
+// Components
 import LeafletMapComponent from './MapContainer';
-import LocationCRUD from './LocationCRUD';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import LocationCRUD from './LocationCRUD'; // Giả định bạn đã có file này
 import AuthModal from './pages/AuthModal';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function MainApp() {
-  const { authToken, logout, userRole, login } = useAuth();
+// Context
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+function Header({ onOpenAuth }) {
+  const { user, logout } = useAuth();
+
+  return (
+    <header className="App-header">
+      <h1>Bản đồ Ẩm thực Hà Nội</h1>
+      <div className="header-controls">
+        {user ? (
+          <div className="user-info">
+            <span>Xin chào, <b>{user.username}</b> ({user.role})</span>
+            <button onClick={logout} className="logout-btn">Đăng xuất</button>
+          </div>
+        ) : (
+          <button onClick={onOpenAuth} className="login-btn">Đăng nhập / Đăng ký</button>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function MainLayout() {
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // 🌞 Theme (mặc định là light)
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
-  useEffect(() => {
-    if (theme === 'light') {
-      document.body.classList.add('light-mode');
-      document.body.classList.remove('dark-mode');
-    } else {
-      document.body.classList.add('dark-mode');
-      document.body.classList.remove('light-mode');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  // 🔑 Giữ trạng thái đăng nhập
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    if (token && role) login(token, role);
-  }, [login]);
+  const { userRole } = useAuth();
 
   return (
     <div className="App">
-      {/* ☀️ / 🌙 Nút chuyển theme */}
-      <button
-        className="theme-toggle"
-        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        title={theme === 'light' ? 'Chuyển sang tối' : 'Chuyển sang sáng'}
-      >
-        {theme === 'light' ? '🌙' : '☀️'}
-      </button>
-
-      <header className="App-header">
-        <h1>Bản đồ Ẩm thực Hà Nội</h1>
-
-        {!authToken ? (
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="login-btn"
-          >
-            Đăng nhập / Đăng ký
-          </button>
-        ) : (
-          <div>
-            <p>Vai trò: {userRole}</p>
-            <button onClick={logout} className="login-btn">
-              Đăng xuất
-            </button>
+      <Header onOpenAuth={() => setShowAuthModal(true)} />
+      
+      {/* Routes Setup */}
+      <Routes>
+        <Route path="/" element={
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+             {/* Nếu là Admin thì hiển thị bảng CRUD ngay trên Map hoặc tách trang riêng */}
+             {/* Ở đây tôi để Admin Dashboard là trang riêng để Map đỡ rối */}
+             {userRole === 'admin' && (
+                <div style={{ padding: 10, background: '#f0f0f0', textAlign: 'center' }}>
+                   <a href="/admin" style={{ fontWeight: 'bold', color: 'red' }}>⚙️ Quản lý địa điểm (CRUD)</a>
+                </div>
+             )}
+             <LeafletMapComponent />
           </div>
-        )}
-      </header>
+        } />
 
-      {/* CRUD chỉ hiển thị khi là admin */}
-      {authToken && userRole === 'admin' && <LocationCRUD />}
+        {/* Route Admin được bảo vệ */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+               <div style={{ padding: 20 }}>
+                  <h2>Trang Quản trị Admin</h2>
+                  <LocationCRUD /> 
+               </div>
+            </ProtectedRoute>
+          } 
+        />
 
-      <div style={{ padding: '20px' }}>
-        <LeafletMapComponent />
-      </div>
+        {/* Route mặc định 404 */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
 
-      {/* Modal đăng nhập / đăng ký */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
@@ -76,9 +78,11 @@ function MainApp() {
 
 function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <MainLayout />
+      </AuthProvider>
+    </Router>
   );
 }
 
