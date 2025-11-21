@@ -1,0 +1,93 @@
+/* src/pages/LandingPage.css */
+
+.landing-container {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* Full màn hình */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+/* Lớp nền chứa ảnh và hiệu ứng Blur */
+.landing-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  /* Link ảnh Phở/Bún chả (Bạn có thể thay link khác hoặc file local) */
+  background-image: url('../../public/background.jpg');
+  background-size: cover;
+  background-position: center;
+  
+  /* Hiệu ứng mờ và tối đi một chút để nổi chữ */
+  filter: blur(4px) brightness(0.6); 
+  transform: scale(1.05); /* Scale to để khi blur không bị hở viền */
+  z-index: 1;
+}
+
+/* Nội dung chính */
+.landing-content {
+  position: relative;
+  z-index: 2; /* Nổi lên trên lớp nền */
+  text-align: center;
+  padding: 20px;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.landing-title {
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+  letter-spacing: 2px;
+}
+
+.landing-subtitle {
+  font-size: 1.5rem;
+  margin-bottom: 40px;
+  font-weight: 300;
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+}
+
+/* Nút bấm to đẹp */
+.landing-btn {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #c0392b; /* Chữ đỏ */
+  background-color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.landing-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  background-color: #ffecec;
+}
+
+.landing-footer {
+  position: absolute;
+  bottom: 20px;
+  z-index: 2;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* Animation xuất hiện */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .landing-title { font-size: 2.5rem; }
+  .landing-subtitle { font-size: 1rem; }
+  .landing-btn { padding: 12px 30px; font-size: 1rem; }
+}

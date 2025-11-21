@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import * as XLSX from 'xlsx';
 
-const API_URL = 'http://localhost:5000/api/locations';
+const API_URL = 'https://vv3rq1lx-5000.asse.devtunnels.ms/api/locations';
 const ADMIN_API_URL = `${API_URL}/admin`;
 
 const LocationCRUD = () => {

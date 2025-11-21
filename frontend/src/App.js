@@ -1,78 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
-// Components
+// Components & Pages
+import MainLayout from './components/MainLayout';
 import LeafletMapComponent from './MapContainer';
-import LocationCRUD from './LocationCRUD'; // Giả định bạn đã có file này
-import AuthModal from './pages/AuthModal';
+import LocationCRUD from './LocationCRUD';
+import LandingPage from './pages/LandingPage.jsx'; // Import trang mới tạo
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Context
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-function Header({ onOpenAuth }) {
-  const { user, logout } = useAuth();
+function AppRoutes() {
+  const { user } = useAuth();
 
+  // --- LOGIC ĐIỀU HƯỚNG QUAN TRỌNG ---
+  // Nếu chưa đăng nhập -> Hiện Landing Page
+  if (!user) {
+    return <LandingPage />;
+  }
+
+  // Nếu đã đăng nhập -> Hiện Main Layout (Bản đồ + Sidebar)
   return (
-    <header className="App-header">
-      <h1>Bản đồ Ẩm thực Hà Nội</h1>
-      <div className="header-controls">
-        {user ? (
-          <div className="user-info">
-            <span>Xin chào, <b>{user.username}</b> ({user.role})</span>
-            <button onClick={logout} className="logout-btn">Đăng xuất</button>
-          </div>
-        ) : (
-          <button onClick={onOpenAuth} className="login-btn">Đăng nhập / Đăng ký</button>
-        )}
-      </div>
-    </header>
-  );
-}
-
-function MainLayout() {
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { userRole } = useAuth();
-
-  return (
-    <div className="App">
-      <Header onOpenAuth={() => setShowAuthModal(true)} />
-      
-      {/* Routes Setup */}
-      <Routes>
-        <Route path="/" element={
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-             {/* Nếu là Admin thì hiển thị bảng CRUD ngay trên Map hoặc tách trang riêng */}
-             {/* Ở đây tôi để Admin Dashboard là trang riêng để Map đỡ rối */}
-             {userRole === 'admin' && (
-                <div style={{ padding: 10, background: '#f0f0f0', textAlign: 'center' }}>
-                   <a href="/admin" style={{ fontWeight: 'bold', color: 'red' }}>⚙️ Quản lý địa điểm (CRUD)</a>
-                </div>
-             )}
-             <LeafletMapComponent />
-          </div>
-        } />
-
-        {/* Route Admin được bảo vệ */}
+    <Routes>
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<LeafletMapComponent />} />
+        
         <Route 
-          path="/admin" 
+          path="admin" 
           element={
             <ProtectedRoute requiredRole="admin">
-               <div style={{ padding: 20 }}>
-                  <h2>Trang Quản trị Admin</h2>
-                  <LocationCRUD /> 
+               <div style={{ padding: '20px', overflowY: 'auto', height: '100%' }}>
+                  <h2>⚙️ Quản lý địa điểm</h2>
+                  <LocationCRUD />
                </div>
             </ProtectedRoute>
           } 
         />
-
-        {/* Route mặc định 404 */}
+        
+        {/* Các route khác nếu có */}
         <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-    </div>
+      </Route>
+    </Routes>
   );
 }
 
@@ -80,7 +49,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <MainLayout />
+         {/* Tách Routes ra component con để dùng được hook useAuth */}
+         <AppRoutes />
       </AuthProvider>
     </Router>
   );
