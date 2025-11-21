@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer as LeafletMapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
 import axios from 'axios';
 
-// 🛠️ Import đúng đường dẫn (cùng cấp thư mục src)
+// 🛠️ Import đúng đường dẫn
 import useGeolocation from './hooks/useGeolocation'; 
 import { useAuth } from './context/AuthContext';
 import { calculateDistance } from './utils/distance';
@@ -25,7 +25,7 @@ const HANOI_POSITION = [21.028511, 105.854199];
 const USER_ZOOM = 15;
 const ADMIN_ZOOM = 13;
 
-// --- HELPER COMPONENT (ĐÃ FIX LỖI _leaflet_pos) ---
+// --- HELPER COMPONENT ---
 const ChangeView = ({ center, zoom }) => {
   const map = useMap();
   
@@ -33,12 +33,8 @@ const ChangeView = ({ center, zoom }) => {
     if (!map || !center) return;
 
     const rafId = requestAnimationFrame(() => {
-      // Kiểm tra container còn tồn tại
       if (map.getContainer()) {
         try {
-          // 🛠️ FIX QUAN TRỌNG: { animate: false }
-          // Tắt animation để cập nhật vị trí tức thì. 
-          // Ngăn chặn việc React hủy map khi Leaflet đang chạy transition zoom.
           map.setView(center, zoom, { animate: false });
         } catch (e) {
           console.warn("Map update ignored:", e);
@@ -156,16 +152,17 @@ const MapContainer = () => {
   if (loading) return <p style={{textAlign: 'center', padding: 20}}>Đang tải bản đồ...</p>;
 
   return (
-    <div style={{ height: '800px', width: '100%', position: 'relative' }}>
-      {error && <div style={{ color: 'red', padding: '10px', background: '#ffebee' }}>{error}</div>}
+    <div className="map-container-leaflet" style={{ position: 'relative' }}>
+      {error && <div style={{ color: 'red', padding: '10px', background: '#ffebee', position: 'absolute', zIndex: 1000, top: 10, left: 10, borderRadius: 8 }}>{error}</div>}
 
       {isAdmin && (
         <button
           onClick={handleToggleMode}
+          className="toggle-mode-btn" // Sử dụng class từ App.css nếu có, hoặc style inline tối giản
           style={{
             position: 'absolute', top: 10, right: 10, zIndex: 999,
             padding: '8px 12px', borderRadius: '8px', border: 'none',
-            background: isAdminMode ? '#d9534f' : '#0275d8', color: 'white', fontWeight: 'bold', cursor: 'pointer',
+            background: isAdminMode ? '#d9534f' : '#2563eb', color: 'white', fontWeight: 'bold', cursor: 'pointer',
             boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
           }}
         >
@@ -223,18 +220,37 @@ const MapContainer = () => {
         })}
       </LeafletMapContainer>
 
-      {/* Modal */}
+      {/* Modal Chi tiết - ĐÃ SỬA DÙNG CLASS CSS THAY VÌ INLINE STYLE */}
       {selectedLocation && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <button style={styles.closeBtn} onClick={() => setSelectedLocation(null)}>×</button>
-            <h2 style={{marginTop: 0}}>{selectedLocation.name}</h2>
+        <div 
+          className={`detail-modal ${selectedLocation.fadeOut ? 'fade-out' : ''}`}
+          // Xử lý đóng khi click ra ngoài (tùy chọn)
+          onClick={(e) => {
+             if (e.target.classList.contains('detail-modal')) setSelectedLocation(null);
+          }}
+        >
+          <div className={`detail-content ${selectedLocation.fadeOut ? 'fade-out-content' : ''}`}>
+            <button 
+              className="detail-close" 
+              onClick={() => setSelectedLocation(null)}
+            >
+              ×
+            </button>
+            
+            <h2>{selectedLocation.name}</h2>
             <p><strong>Địa chỉ:</strong> {selectedLocation.address}</p>
+            
             {selectedLocation.description && (
-               <div style={{background: '#f5f5f5', padding: '10px', borderRadius: '4px', margin: '10px 0'}}>
+               <div style={{ 
+                 background: 'rgba(0,0,0,0.05)', // Dùng màu trong suốt để hợp cả light/dark
+                 padding: '10px', 
+                 borderRadius: '4px', 
+                 margin: '10px 0'
+               }}>
                  {selectedLocation.description}
                </div>
             )}
+            
             {!isAdminMode && userLocation.loaded && (
               <p style={{color: '#E65100', fontWeight: 'bold', marginTop: '10px'}}>
                 📍 Khoảng cách: {getDistanceToUser(selectedLocation)?.toFixed(2)} km
@@ -245,23 +261,6 @@ const MapContainer = () => {
       )}
     </div>
   );
-};
-
-const styles = {
-  modalOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    background: 'rgba(0,0,0,0.5)', zIndex: 1000,
-    display: 'flex', justifyContent: 'center', alignItems: 'center'
-  },
-  modalContent: {
-    background: 'white', padding: '20px', borderRadius: '8px',
-    width: '90%', maxWidth: '400px', position: 'relative',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
-  },
-  closeBtn: {
-    position: 'absolute', top: '10px', right: '10px',
-    border: 'none', background: 'none', fontSize: '24px', cursor: 'pointer', color: '#666'
-  }
 };
 
 export default MapContainer;

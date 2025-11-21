@@ -8,6 +8,9 @@ import AuthModal from './pages/AuthModal';
 function MainApp() {
   const { authToken, logout, userRole, login } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // State để hiển thị tên người dùng
+  const [username, setUsername] = useState('');
 
   // 🌞 Theme (mặc định là light)
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -23,12 +26,45 @@ function MainApp() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // 🔑 Giữ trạng thái đăng nhập
+  // 👇 Luôn cuộn lên đầu trang khi tải app
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
+  // 🔑 Giữ trạng thái đăng nhập & Cập nhật Username
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    if (token && role) login(token, role);
+    const savedName = localStorage.getItem('username'); // Lấy tên từ bộ nhớ
+
+    if (token && role) {
+      login(token, role);
+    }
+    
+    if (savedName) {
+      setUsername(savedName);
+    }
   }, [login]);
+
+  // Cập nhật username khi authToken thay đổi (để UI cập nhật ngay khi login xong)
+  useEffect(() => {
+    if (authToken) {
+      const name = localStorage.getItem('username');
+      if (name) setUsername(name);
+    } else {
+      setUsername('');
+    }
+  }, [authToken]);
+
+  // Hàm đăng xuất mở rộng (xóa cả username)
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem('username');
+    setUsername('');
+  };
 
   return (
     <div className="App">
@@ -38,7 +74,7 @@ function MainApp() {
         onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         title={theme === 'light' ? 'Chuyển sang tối' : 'Chuyển sang sáng'}
       >
-        {theme === 'light' ? '🌙' : '☀️'}
+        {theme === 'light' ? '☀️' : '🌙'}
       </button>
 
       <header className="App-header">
@@ -53,8 +89,13 @@ function MainApp() {
           </button>
         ) : (
           <div>
-            <p>Vai trò: {userRole}</p>
-            <button onClick={logout} className="login-btn">
+            {/* 👇 Hiển thị lời chào */}
+            <h3 style={{ margin: '0 0 10px 0', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+              Xin chào, {username || 'Bạn'}!
+            </h3>
+            <p>Vai trò: {userRole === 'admin' ? 'Quản trị viên' : 'Thành viên'}</p>
+            
+            <button onClick={handleLogout} className="login-btn">
               Đăng xuất
             </button>
           </div>
