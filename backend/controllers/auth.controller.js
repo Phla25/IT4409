@@ -90,10 +90,11 @@ exports.login = async (req, res) => {
     const { password_hash, ...userInfo } = user;
     
     res.status(200).json({ 
-      success: true, 
+      success: true,
       message: "Đăng nhập thành công.",
-      token, 
-      user: userInfo 
+      token,
+      user: userInfo,
+      role: user.role // 🟢 THÊM DÒNG NÀY
     });
 
   } catch (error) {
@@ -135,7 +136,8 @@ exports.adminLogin = async (req, res) => {
       success: true,
       message: "Chào mừng quản trị viên quay trở lại.",
       token,
-      user: adminInfo
+      user: adminInfo,
+      role: admin.role // 🟢 THÊM DÒNG NÀY
     });
 
   } catch (error) {
