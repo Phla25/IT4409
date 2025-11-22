@@ -81,7 +81,8 @@ const LeafletMapComponent = () => {
       {isAdmin && (
         <button
           onClick={() => setIsAdminMode(!isAdminMode)}
-          style={{ position: 'absolute', top: 60, right: 10, zIndex: 1000 }}
+          class = "btn"
+          style={{ position: 'absolute', top: 100, right: 10, zIndex: 1000, padding: '5px 10px' }}
         >
           {isAdminMode ? "Switch to User View" : "Switch to Admin View"}
         </button>

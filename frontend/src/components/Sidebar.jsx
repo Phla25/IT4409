@@ -12,7 +12,7 @@ export default function Sidebar({ isOpen, onCloseMobile }) {
   ];
 
   if (userRole === 'admin') {
-    menuItems.push({ label: '⚙️ Quản lý (Admin)', path: '/admin' });
+    menuItems.push({ label: '⚙️ Quản lý địa điểm', path: '/admin' });
   }
 
   return (

@@ -5,40 +5,55 @@ import './App.css';
 // Components & Pages
 import MainLayout from './components/MainLayout';
 import LeafletMapComponent from './MapContainer';
-import LocationCRUD from './LocationCRUD';
-import LandingPage from './pages/LandingPage.jsx'; // Import trang mới tạo
+// 👇 Đảm bảo đường dẫn này đúng với máy bạn (src/LocationCRUD.js hay src/pages/LocationCRUD.js?)
+import LocationCRUD from './pages/LocationCRUD'; 
+import LandingPage from './pages/LandingPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+// --- TRANG BÁO LỖI QUYỀN (Component nhỏ nội bộ) ---
+function UnauthorizedPage() {
+  return (
+    <div style={{ padding: 50, textAlign: 'center', marginTop: 50 }}>
+      <h1>⛔ Truy cập bị từ chối</h1>
+      <p>Bạn cần quyền <b>Quản trị viên (Admin)</b> để truy cập trang này.</p>
+      <a href="/" style={{ color: 'blue', textDecoration: 'underline' }}>Quay lại trang chủ</a>
+    </div>
+  );
+}
+
 function AppRoutes() {
   const { user } = useAuth();
 
-  // --- LOGIC ĐIỀU HƯỚNG QUAN TRỌNG ---
   // Nếu chưa đăng nhập -> Hiện Landing Page
   if (!user) {
     return <LandingPage />;
   }
 
-  // Nếu đã đăng nhập -> Hiện Main Layout (Bản đồ + Sidebar)
   return (
     <Routes>
       <Route path="/" element={<MainLayout />}>
+        {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
         
+        {/* Route Admin được bảo vệ */}
         <Route 
           path="admin" 
           element={
             <ProtectedRoute requiredRole="admin">
-               <div style={{ padding: '20px', overflowY: 'auto', height: '100%' }}>
-                  <h2>⚙️ Quản lý địa điểm</h2>
+               <div style={{ padding: '20px', overflowY: 'auto', height: '100%', width: '100%' }}>
+                  {/* Render bảng quản lý */}
                   <LocationCRUD />
                </div>
             </ProtectedRoute>
           } 
         />
         
-        {/* Các route khác nếu có */}
+        {/* 👇 THÊM ROUTE NÀY */}
+        <Route path="unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Catch-all: Về trang chủ */}
         <Route path="*" element={<Navigate to="/" />} />
       </Route>
     </Routes>
@@ -49,7 +64,6 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-         {/* Tách Routes ra component con để dùng được hook useAuth */}
          <AppRoutes />
       </AuthProvider>
     </Router>

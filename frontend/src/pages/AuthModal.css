@@ -47,6 +47,13 @@ h2 {
   color: #333;
 }
 
+label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: block;
+  color: #555;
+}
+
 .error-msg {
   background-color: #ffebee;
   color: #d32f2f;
@@ -82,9 +89,9 @@ h2 {
 }
 
 .role-option.active {
-  border-color: #007bff;
-  background-color: #e7f1ff;
-  color: #007bff;
+  border-color: #e74c3c;
+  background-color: #ffe7e7;
+  color: #e74c3c;
   font-weight: bold;
 }
 
@@ -111,7 +118,7 @@ h2 {
 .submit-btn {
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
+  background-color: #e74c3c;
   color: white;
   border: none;
   border-radius: 5px;
@@ -122,7 +129,7 @@ h2 {
 }
 
 .submit-btn:hover {
-  background-color: #0056b3;
+  background-color: #a93226;
 }
 
 .submit-btn:disabled {
@@ -133,10 +140,11 @@ h2 {
   text-align: center;
   margin-top: 15px;
   font-size: 14px;
+  color: #555;
 }
 
 .switch-mode span {
-  color: #007bff;
+  color: #e74c3c;
   cursor: pointer;
   font-weight: bold;
 }

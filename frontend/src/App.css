@@ -81,6 +81,18 @@ html, body, #root {
   cursor: pointer;
   padding: 5px;
 }
+.btn {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #c0392b; /* Chữ đỏ */
+  background-color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
 
 /* Class riêng cho nút trong Header để dễ chỉnh */
 .btn-header-login {
