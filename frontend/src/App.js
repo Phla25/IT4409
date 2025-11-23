@@ -7,6 +7,7 @@ import MainLayout from './components/MainLayout';
 import LeafletMapComponent from './MapContainer';
 // 👇 Đảm bảo đường dẫn này đúng với máy bạn (src/LocationCRUD.js hay src/pages/LocationCRUD.js?)
 import LocationCRUD from './pages/LocationCRUD'; 
+import LocationDetailPage from './pages/LocationDetailPage.jsx'; // ✨ THÊM DÒNG NÀY
 import LandingPage from './pages/LandingPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -36,6 +37,9 @@ function AppRoutes() {
       <Route path="/" element={<MainLayout />}>
         {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
+
+        {/* ✨ THÊM ROUTE CHO TRANG CHI TIẾT */}
+        <Route path="locations/:id" element={<LocationDetailPage />} />
         
         {/* Route Admin được bảo vệ */}
         <Route 

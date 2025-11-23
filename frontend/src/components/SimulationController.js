@@ -1,25 +1,57 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const SimulationController = ({ initialPosition, onPositionChange }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false); // State để quản lý việc ẩn/hiện
+  // --- STATE ---
   const [position, setPosition] = useState(initialPosition);
+  // ✨ State mới cho các ô input, lưu dưới dạng chuỗi để người dùng dễ dàng chỉnh sửa
+  const [inputCoords, setInputCoords] = useState({
+    lat: initialPosition.lat.toString(),
+    lng: initialPosition.lng.toString(),
+  });
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // --- STATE CHO VIỆC KÉO THẢ PANEL ---
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [panelPosition, setPanelPosition] = useState({ x: 20, y: 150 });
   const panelRef = useRef(null);
 
-  // Cập nhật vị trí nội bộ khi vị trí ban đầu thay đổi
+  // --- EFFECTS ---
+  // Đồng bộ state nội bộ khi vị trí từ props (bản đồ) thay đổi
   useEffect(() => {
     setPosition(initialPosition);
+    setInputCoords({ lat: initialPosition.lat.toString(), lng: initialPosition.lng.toString() });
   }, [initialPosition]);
 
   const handleMove = (latChange, lngChange) => {
     const newPos = {
-      lat: position.lat + latChange,
-      lng: position.lng + lngChange,
+      // Sử dụng parseFloat để đảm bảo phép cộng số học
+      lat: parseFloat(position.lat) + latChange,
+      lng: parseFloat(position.lng) + lngChange,
     };
     setPosition(newPos);
     onPositionChange(newPos);
+  };
+
+  // ✨ Xử lý khi người dùng nhập vào ô tọa độ
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setInputCoords(prev => ({ ...prev, [name]: value }));
+  };
+
+  // ✨ Xử lý khi người dùng nhấn nút "Đi đến" hoặc Enter
+  const handleApplyCoords = (e) => {
+    e.preventDefault(); // Ngăn form submit và tải lại trang
+    const newLat = parseFloat(inputCoords.lat);
+    const newLng = parseFloat(inputCoords.lng);
+
+    if (!isNaN(newLat) && !isNaN(newLng)) {
+      const newPos = { lat: newLat, lng: newLng };
+      setPosition(newPos);
+      onPositionChange(newPos);
+    } else {
+      alert("Tọa độ không hợp lệ!");
+    }
   };
 
   // --- Xử lý kéo thả panel ---
@@ -75,6 +107,23 @@ const SimulationController = ({ initialPosition, onPositionChange }) => {
           <div className="coords-display">
             Lat: {position.lat.toFixed(4)}, Lng: {position.lng.toFixed(4)}
           </div>
+
+          {/* ✨ FORM NHẬP TỌA ĐỘ MỚI */}
+          <form onSubmit={handleApplyCoords} className="coord-input-form">
+            <div className="coord-input-group">
+              <input
+                type="number" step="any" name="lat"
+                value={inputCoords.lat} onChange={handleInputChange}
+                placeholder="Vĩ độ"
+              />
+              <input
+                type="number" step="any" name="lng"
+                value={inputCoords.lng} onChange={handleInputChange}
+                placeholder="Kinh độ"
+              />
+            </div>
+            <button type="submit" className="btn-apply-coords">Đi đến</button>
+          </form>
           <div className="move-controls">
             <button className="north" onClick={() => handleMove(moveStep, 0)} title="Di chuyển lên Bắc">↑</button>
             <button className="west" onClick={() => handleMove(0, -moveStep)} title="Di chuyển sang Tây">←</button>

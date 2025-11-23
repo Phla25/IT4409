@@ -661,3 +661,117 @@ input:checked + .slider:before { transform: translateX(22px); }
 .radius-input-container span {
   color: #555;
 }
+
+/* =========================================
+   15. POPUP DETAILS BUTTON
+   ========================================= */
+.popup-details-container {
+  margin-top: 10px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+}
+
+.popup-details-button {
+  width: 100%;
+  background-color: #3498db; /* Màu xanh dương khác biệt */
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+.popup-details-button:hover {
+  background-color: #2980b9;
+}
+
+/* =========================================
+   16. SIMULATION COORD INPUT
+   ========================================= */
+.coord-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coord-input-group {
+  display: flex;
+  gap: 5px;
+}
+
+.coord-input-group input {
+  width: 100%;
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  -moz-appearance: textfield; /* Tắt mũi tên tăng/giảm trên Firefox */
+}
+
+/* Tắt mũi tên tăng/giảm trên Chrome, Safari, Edge */
+.coord-input-group input::-webkit-outer-spin-button,
+.coord-input-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-apply-coords {
+  background-color: #27ae60; /* Màu xanh lá cây */
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+.btn-apply-coords:hover {
+  background-color: #229954;
+}
+
+/* =========================================
+   16. SIMULATION COORD INPUT
+   ========================================= */
+.coord-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coord-input-group {
+  display: flex;
+  gap: 5px;
+}
+
+.coord-input-group input {
+  width: 100%;
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  -moz-appearance: textfield; /* Tắt mũi tên tăng/giảm trên Firefox */
+}
+
+/* Tắt mũi tên tăng/giảm trên Chrome, Safari, Edge */
+.coord-input-group input::-webkit-outer-spin-button,
+.coord-input-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-apply-coords {
+  background-color: #27ae60; /* Màu xanh lá cây */
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+.btn-apply-coords:hover {
+  background-color: #229954;
+}

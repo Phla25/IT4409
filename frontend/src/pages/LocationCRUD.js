@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✨ THÊM DÒNG NÀY
 import API from '../api'; // Dùng instance đã cấu hình interceptor
 import * as XLSX from 'xlsx';
 import './LocationCRUD.css'; // Nhớ đảm bảo file CSS này đã được tạo như bước trước
@@ -6,6 +7,7 @@ import './LocationCRUD.css'; // Nhớ đảm bảo file CSS này đã được t
 export default function LocationCRUD() {
   // --- STATE QUẢN LÝ DỮ LIỆU ---
   const [locations, setLocations] = useState([]);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0); // Biến trigger reload
   const [view, setView] = useState('list'); // 'list' hoặc 'form'
@@ -328,6 +330,12 @@ export default function LocationCRUD() {
                           ✅
                         </button>
                       )}
+                      {/* ✨ THÊM NÚT XEM CHI TIẾT */}
+                      <button 
+                        className="btn-icon view" 
+                        onClick={() => navigate(`/locations/${loc.id}`)} 
+                        title="Xem chi tiết">👁️
+                      </button>
                       <button className="btn-icon edit" onClick={() => openEditForm(loc)} title="Sửa">✏️</button>
                       <button className="btn-icon delete" onClick={() => handleDelete(loc.id)} title="Xóa">🗑️</button>
                     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline } from 'react-leaflet';
+import { useNavigate } from 'react-router-dom'; // ✨ THÊM DÒNG NÀY
 import API from './api'; // Dùng instance API chung
 import useGeolocation from './hooks/useGeolocation'; // Giữ nguyên file hook của bạn
 import SimulationController from './components/SimulationController'; // Import component mới
@@ -44,9 +45,23 @@ const FitBoundsToRoute = ({ route }) => {
   return null; // Component này không render ra giao diện
 };
 
+// --- COMPONENT HELPER: Thay đổi view của bản đồ ---
+const ChangeView = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    // setView sẽ di chuyển bản đồ đến tọa độ và mức zoom mới một cách mượt mà
+    if (center) {
+      map.setView(center, zoom, { animate: true, duration: 1 });
+    }
+  }, [center, zoom, map]);
+
+  return null;
+};
+
 const LeafletMapComponent = () => {
   const { userRole } = useAuth();
   const isAdmin = userRole === 'admin';
+  const navigate = useNavigate(); // ✨ THÊM DÒNG NÀY
   
   const [locations, setLocations] = useState([]);
   const [isAdminMode, setIsAdminMode] = useState(false); // Chế độ xem của Admin
@@ -66,6 +81,10 @@ const LeafletMapComponent = () => {
 
   // Quyết định xem nên dùng vị trí thật hay vị trí giả lập
   const effectiveUserLocation = useMemo(() => {
+    // Nếu đang ở admin mode, không cần vị trí người dùng
+    if (isAdminMode) {
+      return { loaded: false, coordinates: { lat: null, lng: null }, error: null };
+    }
     if (simulatedLocation) {
       return {
         loaded: true,
@@ -74,8 +93,24 @@ const LeafletMapComponent = () => {
       };
     }
     return userLocation; // Vị trí thật từ hook
-  }, [simulatedLocation, userLocation]);
+  }, [simulatedLocation, userLocation, isAdminMode]);
 
+  // --- STATE CHO MAP VIEW ---
+  const [mapCenter, setMapCenter] = useState(hanoiPosition);
+  const [mapZoom, setMapZoom] = useState(13);
+
+  // --- EFFECT ĐỂ XỬ LÝ CHUYỂN VIEW ---
+  useEffect(() => {
+    if (isAdminMode) {
+      // Khi chuyển sang Admin View, zoom ra Hà Nội
+      setMapCenter(hanoiPosition);
+      setMapZoom(13);
+    } else if (effectiveUserLocation.loaded && effectiveUserLocation.coordinates.lat) {
+      // Khi chuyển sang User View (và có vị trí), zoom vào người dùng
+      setMapCenter([effectiveUserLocation.coordinates.lat, effectiveUserLocation.coordinates.lng]);
+      setMapZoom(15);
+    }
+  }, [isAdminMode, effectiveUserLocation.loaded, effectiveUserLocation.coordinates]);
 
   // Khi role thay đổi, cập nhật chế độ
   useEffect(() => {
@@ -178,19 +213,32 @@ const LeafletMapComponent = () => {
     setRadius(value);
   };
   // Gọi API khi dependency thay đổi
-  useEffect(() => {
-    // Nếu là Admin mode -> gọi luôn
-    // Nếu là User mode -> chờ có vị trí mới gọi
-    if (isAdminMode || (effectiveUserLocation.loaded && !effectiveUserLocation.error)) {
+  useEffect(() => { // Nếu là Admin mode -> gọi luôn // Nếu là User mode -> chờ có vị trí mới gọi
+    if (isAdminMode || effectiveUserLocation.loaded && !effectiveUserLocation.error) {
       fetchLocations();
     }
   }, [isAdminMode, effectiveUserLocation, radius]);
+
+  /**
+   * ✨ Xử lý sự kiện khi Admin kéo thả marker vị trí người dùng (giả lập)
+   * @param {DragEndEvent} e - Sự kiện từ Leaflet
+   */
+  const handleUserMarkerDrag = (e) => {
+    // Chỉ cho phép chức năng này khi là Admin và đang ở User View
+    if (!isAdmin || isAdminMode) return;
+
+    const newLatLng = e.target.getLatLng();
+    setSimulatedLocation({
+      lat: newLatLng.lat,
+      lng: newLatLng.lng,
+    });
+  };
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
 
       {/* --- BỘ ĐIỀU KHIỂN GIẢ LẬP (CHỈ HIỆN KHI ADMIN Ở USER VIEW) --- */}
-      {isAdmin && !isAdminMode && userLocation.loaded && (
+      {isAdmin && !isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
         <SimulationController
           initialPosition={effectiveUserLocation.coordinates}
           onPositionChange={setSimulatedLocation}
@@ -261,8 +309,11 @@ const LeafletMapComponent = () => {
         </div>
       )}
 
-      <MapContainer center={hanoiPosition} zoom={13} style={{ height: '100%', width: '100%' }}>
+      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }}>
         <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
+
+        {/* Component helper để thay đổi view */}
+        <ChangeView center={mapCenter} zoom={mapZoom} />
 
         {/* Component helper để tự động zoom */}
         <FitBoundsToRoute route={route} />
@@ -275,7 +326,11 @@ const LeafletMapComponent = () => {
           <>
             <Marker 
               position={[effectiveUserLocation.coordinates.lat, effectiveUserLocation.coordinates.lng]}
-              icon={currentLocationIcon} /* <-- SỬ DỤNG ICON MÀU ĐỎ Ở ĐÂY */
+              icon={currentLocationIcon}
+              // ✨ BẬT CHỨC NĂNG KÉO THẢ CHO ADMIN Ở USER VIEW
+              draggable={isAdmin && !isAdminMode}
+              // ✨ CẬP NHẬT VỊ TRÍ GIẢ LẬP KHI KÉO XONG
+              eventHandlers={{ dragend: handleUserMarkerDrag }}
             >
               <Popup>Bạn đang ở đây</Popup>
             </Marker>
@@ -334,6 +389,20 @@ const LeafletMapComponent = () => {
                       onClick={() => getDirections(effectiveUserLocation.coordinates, loc, 'foot-walking')}
                     >
                       🚶 Đi bộ
+                    </button>
+                  </div>
+                )}
+
+                {/* ✨ THÊM NÚT XEM CHI TIẾT */}
+                {loc.id && (
+                  <div className="popup-details-container">
+                    <button 
+                      className="popup-details-button" 
+                      onClick={() => {
+                        const targetUrl = isAdmin && !isAdminMode ? `/locations/${loc.id}?view=user` : `/locations/${loc.id}`;
+                        navigate(targetUrl);
+                      }}>
+                      Xem chi tiết 
                     </button>
                   </div>
                 )}
