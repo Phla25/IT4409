@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom'; // ✨ THÊM DÒNG NÀY
 import API from './api'; // Dùng instance API chung
 import useGeolocation from './hooks/useGeolocation'; // Giữ nguyên file hook của bạn
 import SimulationController from './components/SimulationController'; // Import component mới
 import { useAuth } from './context/AuthContext';
-import { calculateDistance } from './utils/distance';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -74,7 +73,6 @@ const LeafletMapComponent = () => {
   const [isFetchingRoute, setIsFetchingRoute] = useState(false); // Trạng thái loading khi tìm đường
 
   const userLocation = useGeolocation();
-  const [selectedLocation, setSelectedLocation] = useState(null);
 
   // --- STATE CHO GIẢ LẬP VỊ TRÍ ---
   const [simulatedLocation, setSimulatedLocation] = useState(null);
@@ -118,7 +116,7 @@ const LeafletMapComponent = () => {
   }, [isAdmin]);
 
   // Hàm fetch dữ liệu
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     try {
       let url = ''; // Khởi tạo url rỗng
       
@@ -137,7 +135,7 @@ const LeafletMapComponent = () => {
     } catch (error) {
       console.error("Error fetching locations:", error);
     }
-  };
+  }, [isAdminMode, effectiveUserLocation.loaded, effectiveUserLocation.coordinates, radius]);
 
   // ============================================================
   // TÍNH NĂNG CHỈ ĐƯỜNG (SỬ DỤNG OPENROUTESERVICE)
@@ -213,11 +211,9 @@ const LeafletMapComponent = () => {
     setRadius(value);
   };
   // Gọi API khi dependency thay đổi
-  useEffect(() => { // Nếu là Admin mode -> gọi luôn // Nếu là User mode -> chờ có vị trí mới gọi
-    if (isAdminMode || effectiveUserLocation.loaded && !effectiveUserLocation.error) {
-      fetchLocations();
-    }
-  }, [isAdminMode, effectiveUserLocation, radius]);
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]); // Dependency bây giờ là hàm fetchLocations đã được useCallback
 
   /**
    * ✨ Xử lý sự kiện khi Admin kéo thả marker vị trí người dùng (giả lập)
@@ -309,7 +305,7 @@ const LeafletMapComponent = () => {
         </div>
       )}
 
-      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }}>
+      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
         <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
 
         {/* Component helper để thay đổi view */}
@@ -343,7 +339,6 @@ const LeafletMapComponent = () => {
           <Marker 
             key={loc.id} 
             position={[loc.latitude, loc.longitude]}
-            eventHandlers={{ click: () => setSelectedLocation(loc) }}
           > 
             {/* --- CẬP NHẬT NỘI DUNG POPUP --- */}
             <Popup> 

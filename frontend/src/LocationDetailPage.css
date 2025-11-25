@@ -51,6 +51,13 @@
     gap: 30px;
 }
 
+/* Responsive: Chuyển sang 1 cột trên màn hình nhỏ hơn 900px */
+@media (max-width: 900px) {
+    .detail-content-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 .detail-info-panel h3 {
     margin-top: 0;
     color: #34495e;

@@ -34,7 +34,9 @@ export default function MainLayout() {
              - Nếu url là "/" -> Outlet sẽ hiện Map.
              - Nếu url là "/admin" -> Outlet sẽ hiện LocationCRUD.
           */}
-          <Outlet /> 
+          <div style={{ width: '100%', height: '100%', overflowY: 'auto' }}>
+            <Outlet />
+          </div> 
         </main>
       </div>
 

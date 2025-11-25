@@ -28,7 +28,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  overflow: hidden; 
+  /* Bỏ overflow: hidden để cho phép cuộn ở các trang con */
 }
 
 /* =========================================
@@ -37,13 +37,12 @@ html, body, #root {
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; 
+  height: 100vh;
 }
 
 .body-container {
   display: flex;
   flex: 1; 
-  overflow: hidden;
   position: relative;
 }
 
@@ -186,6 +185,7 @@ html, body, #root {
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow-y: auto; /* Cho phép nội dung chính tự cuộn khi cần */
 }
 
 .leaflet-container {
