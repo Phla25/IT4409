@@ -1,35 +1,73 @@
-// backend/routes/location.routes.js (ĐÃ FIX LỖI 100%)
+// backend/routes/location.routes.js
 const express = require('express');
 const router = express.Router();
 
-// 1. Import Controllers
+// Import Controller & Middleware
 const locationController = require('../controllers/location.controller');
-
-// 2. Import Middleware
 const authMiddleware = require('../middlewares/auth.middleware');
 
-// --- CÁC TUYẾN ĐƯỜNG CÔNG CỘNG (PUBLIC ROUTES) ---
-// (Đặt trước các route có tham số động)
-router.get('/', locationController.getAllLocations); // Lấy tất cả đã duyệt cho Map
-router.get('/nearby', locationController.getNearbyLocations); // Gợi ý gần bạn
+// ==========================================
+// 1. PUBLIC ROUTES (Ai cũng xem được)
+// ==========================================
 
-// --- IMPORT HÀNG LOẠT TỪ EXCEL ---
-// Admin có thể gửi danh sách địa điểm dạng JSON để thêm nhanh
+// Lấy danh sách địa điểm hiển thị lên bản đồ (Chỉ lấy cái đã duyệt)
+router.get('/', locationController.getAllLocations);
+
+// Gợi ý địa điểm gần bạn (Theo bán kính)
+router.get('/nearby', locationController.getNearbyLocations);
+
+// ==========================================
+// 2. USER ROUTES (Cần đăng nhập)
+// ==========================================
+
+// User đề xuất địa điểm mới (Hoặc Admin tạo nhanh)
+// LƯU Ý: Chỉ cần verifyToken. Trong Controller sẽ kiểm tra:
+// - Nếu là User -> Tạo với status "pending" (Chờ duyệt)
+// - Nếu là Admin -> Tạo với status "approved" (Hiện luôn)
+router.post(
+  '/propose', 
+  authMiddleware.verifyToken, 
+  locationController.createLocation
+);
+
+// ==========================================
+// 3. ADMIN ROUTES (Chỉ Admin được truy cập)
+// ==========================================
+
+// Lấy TOÀN BỘ địa điểm (Bao gồm cả chưa duyệt để quản lý)
+router.get(
+  '/admin/all', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.getAllLocationsForAdmin
+);
+
+// Import hàng loạt từ Excel
 router.post(
   '/batch',
   [authMiddleware.verifyToken, authMiddleware.isAdmin],
   locationController.batchCreateLocations
 );
 
-// --- PROTECTED ADMIN ROUTES (CRUD) ---
-// Sử dụng mảng middleware [authMiddleware.verifyToken, authMiddleware.isAdmin]
-// Đặt tuyến /admin trước tuyến /:id
-router.get('/admin', [authMiddleware.verifyToken, authMiddleware.isAdmin], locationController.getAllLocationsForAdmin); 
-router.post('/', [authMiddleware.verifyToken, authMiddleware.isAdmin], locationController.createLocation);
-router.put('/:id', [authMiddleware.verifyToken, authMiddleware.isAdmin], locationController.updateLocation);
-router.delete('/:id', [authMiddleware.verifyToken, authMiddleware.isAdmin], locationController.deleteLocation);
+// Cập nhật địa điểm (Duyệt bài, sửa thông tin)
+router.put(
+  '/:id', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.updateLocation
+);
 
-// --- TUYẾN ĐƯỜNG CÔNG CỘNG CÓ THAM SỐ (PHẢI ĐẶT CUỐI CÙNG) ---
-router.get('/:id', locationController.getLocationById); 
+// Xóa địa điểm
+router.delete(
+  '/:id', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.deleteLocation
+);
+
+// ==========================================
+// 4. PUBLIC DETAIL (Đặt cuối cùng)
+// ==========================================
+
+// Xem chi tiết một địa điểm
+// (Controller sẽ tự xử lý: Admin xem được hết, User chỉ xem được cái đã duyệt)
+router.get('/:id', locationController.getLocationById);
 
 module.exports = router;

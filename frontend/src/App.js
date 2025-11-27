@@ -1,125 +1,80 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+
+// Components & Pages
+import MainLayout from './components/MainLayout';
 import LeafletMapComponent from './MapContainer';
-import LocationCRUD from './LocationCRUD';
+// 👇 Đảm bảo đường dẫn này đúng với máy bạn (src/LocationCRUD.js hay src/pages/LocationCRUD.js?)
+import LocationCRUD from './pages/LocationCRUD';
+import LocationListPage from './pages/LocationListPage'; // ✨ THÊM DÒNG NÀY
+import LocationDetailPage from './pages/LocationDetailPage.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import ProtectedRoute from './components/ProtectedRoute';
+
 import { AuthProvider, useAuth } from './context/AuthContext';
-import AuthModal from './pages/AuthModal';
 
-function MainApp() {
-  const { authToken, logout, userRole, login } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  
-  // State để hiển thị tên người dùng
-  const [username, setUsername] = useState('');
+// --- TRANG BÁO LỖI QUYỀN (Component nhỏ nội bộ) ---
+function UnauthorizedPage() {
+  return (
+    <div style={{ padding: 50, textAlign: 'center', marginTop: 50 }}>
+      <h1>⛔ Truy cập bị từ chối</h1>
+      <p>Bạn cần quyền <b>Quản trị viên (Admin)</b> để truy cập trang này.</p>
+      <a href="/" style={{ color: 'blue', textDecoration: 'underline' }}>Quay lại trang chủ</a>
+    </div>
+  );
+}
 
-  // 🌞 Theme (mặc định là light)
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+function AppRoutes() {
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (theme === 'light') {
-      document.body.classList.add('light-mode');
-      document.body.classList.remove('dark-mode');
-    } else {
-      document.body.classList.add('dark-mode');
-      document.body.classList.remove('light-mode');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  // 👇 Luôn cuộn lên đầu trang khi tải app
-  useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-    window.scrollTo(0, 0);
-  }, []);
-
-  // 🔑 Giữ trạng thái đăng nhập & Cập nhật Username
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    const savedName = localStorage.getItem('username'); // Lấy tên từ bộ nhớ
-
-    if (token && role) {
-      login(token, role);
-    }
-    
-    if (savedName) {
-      setUsername(savedName);
-    }
-  }, [login]);
-
-  // Cập nhật username khi authToken thay đổi (để UI cập nhật ngay khi login xong)
-  useEffect(() => {
-    if (authToken) {
-      const name = localStorage.getItem('username');
-      if (name) setUsername(name);
-    } else {
-      setUsername('');
-    }
-  }, [authToken]);
-
-  // Hàm đăng xuất mở rộng (xóa cả username)
-  const handleLogout = () => {
-    logout();
-    localStorage.removeItem('username');
-    setUsername('');
-  };
+  // Nếu chưa đăng nhập -> Hiện Landing Page
+  if (!user) {
+    return <LandingPage />;
+  }
 
   return (
-    <div className="App">
-      {/* ☀️ / 🌙 Nút chuyển theme */}
-      <button
-        className="theme-toggle"
-        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        title={theme === 'light' ? 'Chuyển sang tối' : 'Chuyển sang sáng'}
-      >
-        {theme === 'light' ? '☀️' : '🌙'}
-      </button>
+    <Routes>
+      <Route path="/" element={<MainLayout />}>
+        {/* Mặc định hiện Map */}
+        <Route index element={<LeafletMapComponent />} />
 
-      <header className="App-header">
-        <h1>Bản đồ Ẩm thực Hà Nội</h1>
+       {/* Route cho trang danh sách địa điểm gần đây */}
+        <Route path="nearby" element={<LocationListPage />} />
 
-        {!authToken ? (
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="login-btn"
-          >
-            Đăng nhập / Đăng ký
-          </button>
-        ) : (
-          <div>
-            {/* 👇 Hiển thị lời chào */}
-            <h3 style={{ margin: '0 0 10px 0', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-              Xin chào, {username || 'Bạn'}!
-            </h3>
-            <p>Vai trò: {userRole === 'admin' ? 'Quản trị viên' : 'Thành viên'}</p>
-            
-            <button onClick={handleLogout} className="login-btn">
-              Đăng xuất
-            </button>
-          </div>
-        )}
-      </header>
+        {/* Route cho trang chi tiết một địa điểm */}
+        <Route path="locations/:id" element={<LocationDetailPage />} />
+        
+        {/* Route Admin được bảo vệ */}
+        <Route 
+          path="admin" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+               <div style={{ padding: '20px', overflowY: 'auto', height: '100%', width: '100%' }}>
+                  {/* Render bảng quản lý */}
+                  <LocationCRUD />
+               </div>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 👇 THÊM ROUTE NÀY */}
+        <Route path="unauthorized" element={<UnauthorizedPage />} />
 
-      {/* CRUD chỉ hiển thị khi là admin */}
-      {authToken && userRole === 'admin' && <LocationCRUD />}
-
-      <div style={{ padding: '20px' }}>
-        <LeafletMapComponent />
-      </div>
-
-      {/* Modal đăng nhập / đăng ký */}
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-    </div>
+        {/* Catch-all: Về trang chủ */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Route>
+    </Routes>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+         <AppRoutes />
+      </AuthProvider>
+    </Router>
   );
 }
 

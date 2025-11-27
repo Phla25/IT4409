@@ -1,397 +1,777 @@
-@import '~leaflet/dist/leaflet.css';
+/* =========================================
+   1. CẤU HÌNH CHUNG (VARIABLES & RESET)
+   ========================================= */
+:root {
+  /* --- BẢNG MÀU THEME ĐỎ (FOOD STYLE) --- */
+  --primary-color: #c0392b;    /* Đỏ đậm (Dùng cho Header) */
+  --accent-color: #e74c3c;     /* Đỏ tươi (Dùng cho điểm nhấn, nút active) */
+  --sidebar-bg: #2c2c2c;       /* Đen xám (Dùng cho Sidebar để tôn màu đỏ) */
+  --sidebar-hover: #3e3e3e;    /* Màu hover sidebar */
+  
+  --text-light: #ffffff;       
+  --text-dark: #333333;        
+  --bg-light: #fdf5f5;         /* Nền nội dung hơi phớt hồng nhẹ cho ấm */
+  
+  --header-height: 60px;
+  --footer-height: 40px;
+  --sidebar-width: 260px;
+  --transition-speed: 0.3s;
+}
 
-/* ----------- RESET & GLOBAL ----------- */
-body {
+* {
+  box-sizing: border-box;
   margin: 0;
-  font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #1e1f24;
-  color: #fff;
+  padding: 0;
 }
 
-/* ----------- APP LAYOUT ----------- */
-.App {
-  text-align: center;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Bỏ overflow: hidden để cho phép cuộn ở các trang con */
 }
 
-/* 🔥 CẬP NHẬT BACKGROUND TẠI ĐÂY 🔥 */
-.App-header {
-  /* LƯU Ý: 
-     1. Bạn cần tạo folder "src/assets" 
-     2. Copy ảnh vào đó và đặt tên là "banner-hanoi.jpg" (hoặc tên file của bạn)
-  */
-  background: linear-gradient(
-      rgba(0, 0, 0, 0.6), 
-      rgba(0, 0, 0, 0.8)
-    ),
-    url('./assets/banner-hanoi.jpg'); /* 👈 Đường dẫn local (tương đối từ file App.css) */
-  
-  background-size: cover;       
-  background-position: center;  
-  background-repeat: no-repeat; 
-  
-  min-height: 91vh; 
+/* =========================================
+   2. BỐ CỤC CHÍNH
+   ========================================= */
+.app-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 40px;
-  border-bottom: 4px solid #3b82f6; 
+  height: 100vh;
 }
 
-/* Tiêu đề chính */
-.App-header h1 {
-  font-size: 3.5rem; 
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-  line-height: 1.2;
-}
-
-/* Dòng chữ phụ hoặc thông tin user */
-.App-header p {
-  font-size: 1.1rem;
-  color: #e5e7eb; 
-  margin-bottom: 20px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-  background: rgba(0, 0, 0, 0.4); 
-  padding: 5px 15px;
-  border-radius: 20px;
-}
-
-/* ----------- BUTTON STYLE ----------- */
-.login-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #fff;
-  font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 28px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); 
-  transition: all 0.25s ease;
-  font-size: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.login-btn:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-}
-
-/* ----------- MAP ----------- */
-.map-container-leaflet {
-  height: 900px;
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-  margin-top: 20px;
-}
-
-/* --- ADMIN CRUD --- */
-.crud-container {
-  background: #2a2d33;
-  padding: 30px;
-  border-radius: 16px;
-  margin: 40px auto;
-  max-width: 1100px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  color: #fff;
-}
-
-.crud-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #93c5fd;
-  margin-bottom: 20px;
-}
-
-.crud-error {
-  background: #dc2626;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.crud-form h3 {
-  color: #60a5fa;
-  margin-bottom: 10px;
-}
-
-.crud-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.crud-form input,
-.crud-form textarea {
-  background: #1f2125;
-  color: white;
-  border: 1px solid #374151;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 14px;
-}
-
-.crud-form input:focus,
-.crud-form textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
-}
-
-.crud-checkbox {
-  margin-top: 10px;
+.body-container {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex: 1; 
+  position: relative;
 }
 
-.crud-actions {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
-}
-
-.btn-success { background: #16a34a; }
-.btn-warning { background: #f59e0b; }
-.btn-gray { background: #6b7280; }
-.btn-blue { background: #2563eb; }
-.btn-red { background: #dc2626; }
-
-.btn-success, .btn-warning, .btn-gray, .btn-blue, .btn-red {
-  border: none;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.btn-success:hover, .btn-warning:hover, .btn-gray:hover, .btn-blue:hover, .btn-red:hover {
-  transform: translateY(-2px);
-  opacity: 0.9;
-}
-
-.crud-subtitle {
-  margin-top: 30px;
-  font-weight: 600;
-  color: #93c5fd;
-}
-
-.crud-list {
-  margin-top: 15px;
-}
-
-/* ===== CRUD CARD ===== */
-.crud-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-left-width: 6px;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.crud-card-header {
+/* =========================================
+   3. HEADER (MÀU ĐỎ)
+   ========================================= */
+.app-header {
+  height: var(--header-height);
+  background: linear-gradient(135deg, var(--primary-color), #a93226); /* Gradient đỏ sang đỏ đậm */
+  color: var(--text-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--card-border);
-  color: var(--card-header-color);
+  padding: 0 20px;
+  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.4); /* Bóng đổ màu đỏ */
+  z-index: 1100; 
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 1.3rem;
+  font-weight: 800; /* Chữ đậm hơn */
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.menu-toggle-btn {
+  display: none; 
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+}
+.btn {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #c0392b; /* Chữ đỏ */
+  background-color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Class riêng cho nút trong Header để dễ chỉnh */
+.btn-header-login {
+  background-color: white;
+  color: var(--primary-color);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-header-login:hover {
+  background-color: #ffecec;
+}
+
+.btn-header-logout {
+  background-color: rgba(0,0,0,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-header-logout:hover {
+  background-color: rgba(0,0,0,0.4);
+  border-color: white;
+}
+
+/* =========================================
+   4. SIDEBAR (MÀU TỐI)
+   ========================================= */
+.app-sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--sidebar-bg);
+  color: #bdc3c7;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-speed) ease;
+  z-index: 1050;
+  border-right: 1px solid rgba(0,0,0,0.1);
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding-top: 20px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 25px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 1rem;
+  border-left: 4px solid transparent;
+  transition: all 0.2s;
+}
+
+.sidebar-item:hover {
+  background-color: var(--sidebar-hover);
+  color: white;
+}
+
+/* Item đang chọn sẽ có vạch đỏ và chữ đỏ sáng */
+.sidebar-item.active {
+  background-color: rgba(231, 76, 60, 0.1); /* Nền đỏ rất nhạt */
+  color: var(--accent-color);
+  border-left-color: var(--accent-color);
   font-weight: 600;
 }
 
-.crud-card.approved { border-left-color: #16a34a; }
-.crud-card.pending { border-left-color: #f59e0b; }
-
-.crud-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-}
-
-.crud-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-  justify-content: flex-start;
-}
-
-.status-approved { color: #16a34a; font-weight: 600; }
-.status-pending { color: #f59e0b; font-weight: 600; }
-
-/* ----------- ANIMATIONS ----------- */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.App-header > * {
-  animation: fadeIn 0.7s ease forwards;
-}
-
-/* ----------- TEXTAREA FULL WIDTH ----------- */
-.crud-textarea {
-  grid-column: 1 / -1;
-  width: 100%;
-  resize: vertical;
-  min-height: 120px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #374151;
-  background: #1f2125;
-  color: white;
-  margin-top: 10px;
-  box-sizing: border-box;
-  font-size: 14px;
-}
-
-.crud-textarea::placeholder { color: #9ca3af; }
-
-/* ----------- RESPONSIVE DESIGN ----------- */
-@media (max-width: 900px) {
-  .crud-container { padding: 20px; max-width: 95%; }
-  .crud-grid { grid-template-columns: 1fr; gap: 12px; }
-  .crud-actions { flex-direction: column; }
-  .crud-actions button { width: 100%; }
-  .crud-title { font-size: 1.4rem; }
-  .crud-form h3 { font-size: 1rem; }
-  .App-header h1 { font-size: 2.2rem; } /* Giảm size chữ trên mobile */
-}
-
-/* ===== Theme System ===== */
-:root {
-  --bg-color: #f9fafb;
-  --text-color: #0f172a;
-  --card-bg: #ffffff;
-  --card-border: #e5e7eb; /* Sửa màu border light cho nhẹ hơn */
-  --card-header-color: #111827;
-  --input-bg: #f3f4f6;
-  --input-border: #cbd5e1;
-  --muted-text: #334155;
-}
-
-.dark-mode {
-  --bg-color: #1e1f24;
-  --text-color: #f9fafb;
-  --card-bg: #2a2d33;
-  --card-border: #4b5563;
-  --card-header-color: #ffffff;
-  --input-bg: #1f2125;
-  --input-border: #374151;
-  --muted-text: #9ca3af;
-}
-
-/* Apply shared theme colors */
-body {
-  background: var(--bg-color);
-  color: var(--text-color);
-  font-weight: 500;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-h1, h2, h3, h4, h5 {
-  color: var(--text-color);
-  font-weight: 700;
-}
-
-p, span, label {
-  color: var(--muted-text);
-}
-
-/* Ngoại lệ: Header luôn dùng chữ trắng vì nền ảnh tối */
-.App-header h1 { color: #fff !important; }
-.App-header p { color: #e5e7eb !important; }
-
-.crud-form input,
-.crud-form textarea {
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  color: var(--text-color);
-  font-weight: 500;
-}
-
-.crud-container {
-  background: var(--card-bg);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-/* 🌙 Nút chuyển chế độ */
-.theme-toggle {
+.sidebar-overlay {
   position: fixed;
-  top: 16px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.2); /* Nền trong suốt */
-  backdrop-filter: blur(5px);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 1040; 
+  backdrop-filter: blur(2px);
 }
 
-.theme-toggle:hover {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.4);
+/* =========================================
+   5. MAIN CONTENT & MAP
+   ========================================= */
+.main-content {
+  flex: 1; 
+  background-color: var(--bg-light);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Cho phép nội dung chính tự cuộn khi cần */
 }
 
-/* Pagination & search */
-.pagination {
+.leaflet-container {
+  width: 100%;
+  height: 100% !important; 
+  flex: 1;
+}
+
+/* =========================================
+   6. FOOTER
+   ========================================= */
+.app-footer {
+  height: var(--footer-height);
+  background-color: #1a1a1a; /* Đen tuyền */
+  color: #7f8c8d;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  margin-top: 16px;
+  font-size: 0.85rem;
+  border-top: 3px solid var(--primary-color); /* Viền đỏ ngăn cách */
+  z-index: 1100;
 }
 
-.pagination button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  background-color: #007bff;
+/* =========================================
+   7. RESPONSIVE
+   ========================================= */
+@media (max-width: 768px) {
+  :root { --sidebar-width: 280px; }
+  .menu-toggle-btn { display: block; }
+  .app-sidebar {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; height: 100%;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+  }
+  .app-sidebar.open { transform: translateX(0); }
+  .header-actions span { display: none; } /* Ẩn tên user trên mobile */
+}
+
+/* =========================================
+   9. LEAFLET CUSTOMIZATION
+   ========================================= */
+
+/* Ghi đè style cho Popup */
+.leaflet-popup-content-wrapper {
+  background-color: #ffffff;
+  border-radius: 8px !important; /* Bo góc mềm mại hơn */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 1px; /* Bỏ padding mặc định để custom bên trong */
+}
+
+.leaflet-popup-content {
+  margin: 12px 18px !important; /* Tăng khoảng cách lề */
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dark);
+}
+
+.leaflet-popup-tip {
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Style cho nút chỉ đường trong popup */
+.popup-directions-link {
+  color: var(--accent-color) !important; /* Dùng màu đỏ tươi */
+  font-weight: 600;
+  text-decoration: none !important;
+}
+
+/* Style cho marker vị trí hiện tại của người dùng */
+.current-location-marker {
+  /* 
+    Bộ lọc CSS này sẽ biến màu xanh lam mặc định của marker Leaflet thành màu đỏ.
+    Bạn có thể điều chỉnh các giá trị để có được sắc thái đỏ mong muốn.
+  */
+  filter: hue-rotate(200deg) saturate(10) brightness(0.9);
+}
+
+/* =========================================
+   10. CUSTOM POPUP STYLES
+   ========================================= */
+
+.location-popup-content {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Khoảng cách giữa các dòng thông tin */
+}
+
+.popup-title {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  margin: 0 0 4px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.popup-info-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.popup-icon {
+  font-size: 1rem;
+  line-height: 1.4; /* Căn icon với dòng chữ */
+}
+
+.popup-status {
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.popup-status.approved {
+  color: #27ae60;
+  background-color: #e9f7ef;
+}
+
+.popup-status.pending {
+  color: #f39c12;
+  background-color: #fef9e7;
+}
+
+.popup-directions-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.popup-directions-button {
+  width: 100%;
+  flex: 1; /* Để 2 nút chia đều không gian */
+  background-color: var(--accent-color);
   color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 5px;
   cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
 }
 
-.pagination button:disabled {
+.popup-directions-button:hover {
+  background-color: var(--primary-color);
+}
+
+/* Style riêng cho nút đi bộ */
+.popup-directions-button.walk {
+  background-color: #2980b9; /* Màu xanh dương */
+}
+
+.popup-directions-button.walk:hover {
+  background-color: #2471a3; /* Xanh dương đậm hơn */
+}
+
+/* =========================================
+   11. CLEAR ROUTE BUTTON
+   ========================================= */
+.route-summary-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 8px 15px;
+  gap: 20px;
+}
+
+.route-info {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+  color: #333;
+  align-items: center;
+}
+
+.route-info span b {
+  color: var(--primary-color);
+}
+
+.btn-clear-route {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-clear-route:hover {
+  background-color: #a93226; /* Màu đỏ sẫm hơn khi hover */
+}
+
+/* =========================================
+   12. ADMIN TOGGLE SWITCH
+   ========================================= */
+.admin-toggle-switch-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.admin-toggle-label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-dark);
+  user-select: none;
+}
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: #ccc;
-  cursor: not-allowed;
+  transition: .4s;
 }
 
-.crud-search {
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px; width: 20px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider { background-color: var(--accent-color); }
+input:focus + .slider { box-shadow: 0 0 1px var(--accent-color); }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* Rounded sliders */
+.slider.round { border-radius: 28px; }
+.slider.round:before { border-radius: 50%; }
+/* =========================================
+   13. SIMULATION CONTROLLER
+   ========================================= */
+.simulation-panel {
+  position: absolute;
+  z-index: 1000;
+  background-color: #f7f7f7; /* Nền xám rất nhạt */
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+  font-size: 14px;
+  width: 220px; /* Cố định chiều rộng */
+}
+
+.simulation-header {
+  background-color: var(--sidebar-bg); /* Dùng màu nền sidebar */
+  color: white;
+  padding: 6px 12px;
+  cursor: move;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-collapse-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 24px;
+  cursor: pointer;
+  padding: 0;
+  font-weight: bold;
+}
+
+.simulation-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.coords-display {
+  background-color: #e9ecef;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+/* --- D-PAD CONTROLS --- */
+.move-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 4px;
+  justify-items: center;
+  align-items: center;
+}
+
+.move-controls button {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  color: #555;
+  font-weight: bold;
+  width: 45px;
+  height: 45px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   display: flex;
   justify-content: center;
-  margin: 16px 0;
+  align-items: center;
 }
 
-.crud-search input {
-  width: 300px;
-  padding: 8px 12px;
+.move-controls button:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Sắp xếp các nút vào D-pad */
+.move-controls .north { grid-area: 1 / 2 / 2 / 3; }
+.move-controls .west  { grid-area: 2 / 1 / 3 / 2; }
+.move-controls .east  { grid-area: 2 / 3 / 3 / 4; }
+.move-controls .south { grid-area: 3 / 2 / 4 / 3; }
+
+/* Nút ở giữa (nếu có) */
+.move-controls .center {
+  grid-area: 2 / 2 / 3 / 3;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.reset-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+.reset-btn:hover {
+  background-color: #5a6268;
+}
+
+/* --- RESPONSIVE CHO SIMULATION PANEL --- */
+@media (max-width: 768px) {
+  .simulation-panel {
+    /* Cố định ở dưới, không cho kéo thả */
+    top: auto !important;
+    left: 0 !important;
+    bottom: 0;
+    width: 100%;
+    border-radius: 15px 15px 0 0;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+  }
+  .simulation-header {
+    cursor: default; /* Bỏ con trỏ 'move' trên mobile */
+    border-radius: 15px 15px 0 0;
+  }
+  .simulation-panel.collapsed .simulation-header {
+    border-radius: 15px 15px 0 0;
+  }
+  .simulation-panel.collapsed {
+    /* Khi thu gọn trên mobile, nó chỉ là 1 thanh nhỏ ở dưới */
+    border-radius: 15px 15px 0 0;
+  }
+}
+
+/* 
+  Khi bảng giả lập (.simulation-panel) xuất hiện trên mobile,
+  nó sẽ đẩy "người anh em" của nó là công tắc (.admin-toggle-switch-container) lên trên.
+  Dấu ~ là "general sibling combinator".
+*/
+@media (max-width: 768px) {
+  /* Khi panel mở rộng, đẩy công tắc lên trên chiều cao của panel */
+  .simulation-panel ~ .admin-toggle-switch-container {
+    /* Ước tính chiều cao của panel khi mở rộng, bạn có thể điều chỉnh giá trị này */
+    bottom: 260px; 
+    transition: bottom 0.3s ease;
+  }
+  /* Khi panel thu gọn, đẩy công tắc lên trên chiều cao của header panel */
+  .simulation-panel.collapsed ~ .admin-toggle-switch-container {
+    bottom: 55px; 
+  }
+}
+
+/* =========================================
+   14. RADIUS FILTER PANEL
+   ========================================= */
+.radius-filter-panel {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  background: white;
+  padding: 12px 15px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 220px;
 }
 
-.location-address {
-  color: var(--muted-text);
-  font-size: 0.95rem;
-  margin-top: 4px;
-  margin-bottom: 6px;
-  display: block;
-  text-align: left;
+.radius-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.radius-input-container label {
+  font-weight: bold;
+  color: var(--text-dark);
+}
+
+.radius-input-container input[type="number"] {
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.radius-input-container span {
+  color: #555;
+}
+
+/* =========================================
+   15. POPUP DETAILS BUTTON
+   ========================================= */
+.popup-details-container {
+  margin-top: 10px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+}
+
+.popup-details-button {
+  width: 100%;
+  background-color: #3498db; /* Màu xanh dương khác biệt */
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+.popup-details-button:hover {
+  background-color: #2980b9;
+}
+
+/* =========================================
+   16. SIMULATION COORD INPUT
+   ========================================= */
+.coord-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coord-input-group {
+  display: flex;
+  gap: 5px;
+}
+
+.coord-input-group input {
+  width: 100%;
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  -moz-appearance: textfield; /* Tắt mũi tên tăng/giảm trên Firefox */
+}
+
+/* Tắt mũi tên tăng/giảm trên Chrome, Safari, Edge */
+.coord-input-group input::-webkit-outer-spin-button,
+.coord-input-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-apply-coords {
+  background-color: #27ae60; /* Màu xanh lá cây */
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+.btn-apply-coords:hover {
+  background-color: #229954;
+}
+
+/* =========================================
+   16. SIMULATION COORD INPUT
+   ========================================= */
+.coord-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coord-input-group {
+  display: flex;
+  gap: 5px;
+}
+
+.coord-input-group input {
+  width: 100%;
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  -moz-appearance: textfield; /* Tắt mũi tên tăng/giảm trên Firefox */
+}
+
+/* Tắt mũi tên tăng/giảm trên Chrome, Safari, Edge */
+.coord-input-group input::-webkit-outer-spin-button,
+.coord-input-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-apply-coords {
+  background-color: #27ae60; /* Màu xanh lá cây */
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+.btn-apply-coords:hover {
+  background-color: #229954;
 }
