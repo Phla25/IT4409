@@ -6,10 +6,10 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     location_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      type: DataTypes.INTEGER
+      // Lưu ý: Có thể null nếu review MenuItem, nhưng logic DB check OR nên ở đây để lỏng
     },
-    dish_id: DataTypes.INTEGER, // Có thể null nếu review địa điểm
+    menu_item_id: DataTypes.INTEGER, // Thay thế dish_id cũ
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false
@@ -17,19 +17,15 @@ module.exports = (sequelize, DataTypes) => {
     rating: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      validate: {
-        min: 1,
-        max: 5 // 
-      }
+      validate: { min: 1, max: 5 }
     },
     comment: DataTypes.TEXT,
     review_type: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      validate: {
-        isIn: [['location', 'dish']]
-      }
+      validate: { isIn: [['location', 'dish']] }
     },
+    images: DataTypes.JSONB, // Thêm cột JSONB lưu mảng ảnh
     is_approved: {
       type: DataTypes.BOOLEAN,
       defaultValue: true

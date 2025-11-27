@@ -14,7 +14,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(50),
       allowNull: false,
       validate: {
-        isIn: [['food_type', 'venue_type', 'feature']] // 
+        // Cập nhật list types mới
+        isIn: [['food_type', 'venue_type', 'feature', 'dish_type', 'dietary']]
       }
     },
     icon_url: DataTypes.TEXT
