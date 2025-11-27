@@ -62,10 +62,9 @@ exports.getNearbyLocations = async (req, res) => {
 // [ADMIN] Lấy tất cả địa điểm (Bao gồm cả chưa duyệt)
 exports.getAllLocationsForAdmin = async (req, res) => {
     try {
-        // API này cần được bảo vệ bởi Middleware check Admin trước khi vào đây
-        const locations = await Location.getAllLocationsForMap(); 
+        // ✨ Sửa đổi: Gọi phương thức `getAllForAdmin` vừa tạo trong model
+        const locations = await Location.getAllForAdmin(); 
         
-        // Không cần lọc is_approved vì Admin cần xem hết
         res.status(200).json({ 
             success: true, 
             count: locations.length, 

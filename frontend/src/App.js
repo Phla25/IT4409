@@ -26,7 +26,7 @@ function UnauthorizedPage() {
 }
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   // Nếu chưa đăng nhập -> Hiện Landing Page
   if (!user) {
@@ -39,8 +39,17 @@ function AppRoutes() {
         {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
 
-       {/* Route cho trang danh sách địa điểm gần đây */}
-        <Route path="nearby" element={<LocationListPage />} />
+        {/* Route cho trang danh sách địa điểm gần đây, chỉ cho user */}
+        <Route
+          path="nearby"
+          element={
+            userRole === 'admin' ? (
+              <Navigate to="/" replace />
+            ) : (
+              <LocationListPage />
+            )
+          }
+        />
 
         {/* Route cho trang chi tiết một địa điểm */}
         <Route path="locations/:id" element={<LocationDetailPage />} />

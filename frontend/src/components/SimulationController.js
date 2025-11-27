@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const SimulationController = ({ initialPosition, onPositionChange }) => {
   // --- STATE ---
@@ -63,17 +63,17 @@ const SimulationController = ({ initialPosition, onPositionChange }) => {
     });
   };
 
-  const onMouseMove = (e) => {
+  const onMouseMove = useCallback((e) => {
     if (!isDragging) return;
     setPanelPosition({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y,
     });
-  };
+  }, [isDragging, dragStart]);
 
-  const onMouseUp = () => {
+  const onMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   useEffect(() => {
     window.addEventListener('mousemove', onMouseMove);
@@ -82,7 +82,7 @@ const SimulationController = ({ initialPosition, onPositionChange }) => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [isDragging]);
+  }, [onMouseMove, onMouseUp]);
 
   const moveStep = 0.001; // Bước nhảy tọa độ
 

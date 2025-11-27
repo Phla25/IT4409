@@ -1,213 +1,155 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import API from '../api';
-import useGeolocation from '../hooks/useGeolocation';
-import { calculateDistance } from '../utils/distance';
-import './LocationListPage.css';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet'; 
+import './LocationDetailPage.css';
+import { useAuth } from '../context/AuthContext'; // ✨ THÊM DÒNG NÀY
 
-// Component hiển thị một địa điểm trong danh sách
-const LocationCard = ({ location, userCoords }) => {
-  const navigate = useNavigate();
-  const distance = userCoords.lat ? calculateDistance(userCoords.lat, userCoords.lng, location.latitude, location.longitude) : null;
+// Fix lỗi icon của Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
-  return (
-    <div className="location-card" onClick={() => navigate(`/locations/${location.id}`)}>
-      <img 
-        src={location.images?.[0]?.url || 'https://via.placeholder.com/150?text=No+Image'} 
-        alt={location.name} 
-        className="card-image"
-      />
-      <div className="card-content">
-        <h3 className="card-title">{location.name}</h3>
-        <p className="card-address">{location.address}</p>
-        <div className="card-footer">
-          <span className="card-rating">
-            ⭐ {location.average_rating ? Number(location.average_rating).toFixed(1) : 'Mới'}
-          </span>
-          {distance !== null && (
-            <span className="card-distance">
-              📍 {distance.toFixed(1)} km
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+const LocationListPage = () => {
+  const { id } = useParams(); // Lấy ID từ URL
+  const { search } = useLocation(); // Lấy query params từ URL (ví dụ: ?view=user)
+  const navigate = useNavigate(); // Hook để điều hướng
+  const [location, setLocation] = useState(null);
+  const { userRole } = useAuth(); // ✨ LẤY VAI TRÒ USER
 
-// Component chính của trang
-export default function LocationListPage() {
-  const userLocation = useGeolocation();
-  const [locations, setLocations] = useState([]);
+  // ✨ LOGIC MỚI: KIỂM TRA QUYỀN ADMIN VÀ CHẾ ĐỘ XEM
+  const queryParams = new URLSearchParams(search);
+  const isUserViewForced = queryParams.get('view') === 'user';
+  const isAdmin = userRole === 'admin' && !isUserViewForced;
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12; // 12 địa điểm mỗi trang
-
-  // State cho tìm kiếm và sắp xếp
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('distance'); // 'distance' hoặc 'rating'
-  const [radius, setRadius] = useState(5); // State cho bán kính tìm kiếm (km), mặc định 5km
 
   useEffect(() => {
-    const fetchLocations = async () => {
-      setLoading(true);
-      setError('');
+    const fetchLocation = async () => {
       try {
-        let response;
-        // Nếu có vị trí người dùng, ưu tiên API tìm kiếm lân cận
-        if (userLocation.loaded && userLocation.coordinates.lat) {
-          const { lat, lng } = userLocation.coordinates;
-          response = await API.get(`/locations/nearby?lat=${lat}&lng=${lng}&radius=${radius}`); // Lấy theo bán kính được chọn
-        } else {
-          // Nếu không, lấy tất cả địa điểm đã được duyệt
-          response = await API.get('/locations');
-        }
-        setLocations(response.data.data || []);
+        setLoading(true);
+        // Gọi API để lấy chi tiết địa điểm theo ID
+        const response = await API.get(`/locations/${id}`);
+        setLocation(response.data.data);
+        setError('');
       } catch (err) {
-        console.error("Lỗi tải danh sách địa điểm:", err);
-        setError("Không thể tải được danh sách địa điểm. Vui lòng thử lại sau.");
+        console.error('Lỗi tải chi tiết địa điểm:', err);
+        setError('Không thể tải thông tin địa điểm. Vui lòng thử lại.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLocations();
-  }, [userLocation.loaded, userLocation.coordinates, radius]); // Fetch lại khi vị trí hoặc bán kính thay đổi
+    fetchLocation();
+  }, [id]); // Chạy lại effect khi ID thay đổi
 
-  // Logic lọc và sắp xếp dữ liệu
-  const processedLocations = useMemo(() => {
-    let filtered = locations.filter(loc =>
-      loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loc.address.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (sortBy === 'distance') {
-      // Chỉ sắp xếp theo khoảng cách nếu có vị trí người dùng
-      if (userLocation.loaded && userLocation.coordinates.lat) {
-        filtered.sort((a, b) => {
-          const distA = calculateDistance(userLocation.coordinates.lat, userLocation.coordinates.lng, a.latitude, a.longitude);
-          const distB = calculateDistance(userLocation.coordinates.lat, userLocation.coordinates.lng, b.latitude, b.longitude);
-          return distA - distB;
-        });
-      }
-    } else if (sortBy === 'rating') {
-      filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0));
-    }
-
-    return filtered;
-  }, [locations, searchTerm, sortBy, userLocation.coordinates, userLocation.loaded]);
-
-  // Logic phân trang
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = processedLocations.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(processedLocations.length / itemsPerPage);
-
-  // --- RENDER ---
   if (loading) {
-    return <div className="list-page-status">⏳ Đang tìm các địa điểm xung quanh bạn...</div>;
+    return <div className="detail-page-loading">⏳ Đang tải thông tin...</div>;
   }
 
   if (error) {
-    return <div className="list-page-status error">❌ {error}</div>;
+    return <div className="detail-page-error">❌ {error}</div>;
   }
 
+  if (!location) {
+    return <div className="detail-page-error">Không tìm thấy địa điểm.</div>;
+  }
+
+  const position = [location.latitude, location.longitude];
+
   return (
-    <div className="location-list-page">
-      <div className="list-header">
-        <h1>Khám phá ẩm thực Hà Nội</h1>
-        <p>
-          {userLocation.loaded && userLocation.coordinates.lat 
-            ? `Tìm thấy ${processedLocations.length} địa điểm trong vòng ${radius} km.`
-            : `Hiển thị ${processedLocations.length} địa điểm nổi bật.`}
-        </p>
+    <div className="location-detail-page">
+      <div className="detail-header">
+        <button onClick={() => navigate(-1)} className="back-button">
+          &larr; Quay lại
+        </button>
+        <h1>{location.name}</h1>
       </div>
 
-      {/* Thanh công cụ: Tìm kiếm và Sắp xếp */}
-      <div className="toolbar-container">
-        <div className="toolbar">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="🔍 Tìm theo tên, địa chỉ..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="sort-options">
-            <label htmlFor="sort-by">Sắp xếp theo:</label>
-            <select 
-              id="sort-by" 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value)}
-              className={sortBy}
-            >
-              <option value="distance" disabled={!userLocation.loaded}>Gần nhất</option>
-              <option value="rating">Đánh giá cao</option>
-            </select>
-          </div>
-          {userLocation.loaded && (
-            <div className="radius-selector">
-              <label htmlFor="radius-input">Trong bán kính:</label>
-              <input
-                id="radius-input"
-                type="number"
-                value={radius}
-                onChange={e => setRadius(e.target.value > 0 ? e.target.value : 1)}
-                min="1"
-                step="1"
-              />
-              <span>km</span>
-            </div>
+      <div className="detail-content-layout">
+        <div className="detail-info-panel">
+          <h3>Thông tin chi tiết</h3>
+          <p><strong>📍 Địa chỉ:</strong> {location.address}, {location.district}</p>
+          {location.description && <p><strong>📝 Mô tả:</strong> {location.description}</p>}
+          {location.phone_number && <p><strong>📞 Điện thoại:</strong> {location.phone_number}</p>}
+          {(location.min_price > 0 || location.max_price > 0) && (
+            <p>
+              <strong>💰 Mức giá:</strong> {location.min_price.toLocaleString()} - {location.max_price.toLocaleString()} VNĐ
+            </p>
+          )}
+          {/* ✨ CHỈ HIỂN THỊ TRẠNG THÁI CHO ADMIN */}
+          {isAdmin && (
+            <p>
+              <strong>Trạng thái:</strong>
+              <span className={`status-badge ${location.is_approved ? 'approved' : 'pending'}`}>{location.is_approved ? 'Đã duyệt' : 'Chờ duyệt'}</span>
+            </p>
           )}
         </div>
-      </div>
 
-      {/* Lưới hiển thị danh sách */}
-      <div className="locations-grid">
-        {processedLocations.length > 0 ? (
-          currentItems.map(loc => (
-            <LocationCard 
-              key={loc.id} 
-              location={loc} 
-              userCoords={userLocation.coordinates} 
+        <div className="detail-map-panel">
+          <MapContainer center={position} zoom={16} scrollWheelZoom={false} className="detail-map">
+            <TileLayer
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+              attribution="Google Maps"
             />
-          ))
-        ) : (
-          <div className="no-results">
-            <p>Không tìm thấy địa điểm nào phù hợp với tìm kiếm của bạn.</p>
-          </div>
-        )}
+            <Marker position={position}>
+              <Popup>{location.name}</Popup>
+            </Marker>
+          </MapContainer>
+        </div>
       </div>
 
-      {/* Điều khiển phân trang */}
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button 
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-            disabled={currentPage === 1}
-          >
-            &laquo; Trang trước
-          </button>
-          {[...Array(totalPages)].map((_, index) => (
-            <button 
-              key={index + 1} 
-              onClick={() => setCurrentPage(index + 1)}
-              className={currentPage === index + 1 ? 'active' : ''}
-            >
-              {index + 1}
-            </button>
-          ))}
-          <button 
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-            disabled={currentPage === totalPages}
-          >
-            Trang sau &raquo;
-          </button>
+          {/* ✨ MỤC HÌNH ẢNH CỦA QUÁN */}
+          {location.images && location.images.length > 0 && (
+            <div className="detail-section">
+              <h4>📷 Hình ảnh</h4>
+              <div className="image-gallery-container">
+                {location.images.map((image, index) => (
+                  <a key={image.id || index} href={image.url} target="_blank" rel="noopener noreferrer">
+                    <img 
+                      src={image.url} 
+                      alt={`${location.name} - ảnh ${index + 1}`} 
+                      className="gallery-image" 
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ✨ MỤC THỰC ĐƠN CÁC MÓN ĂN */}
+          {location.menu && location.menu.length > 0 && (
+            <div className="detail-section">
+              <h4>📜 Thực đơn</h4>
+              <ul className="menu-list">
+                {location.menu.map((item, index) => (
+                  <li key={index} className="menu-item">
+                    <span className="menu-item-name">{item.name}</span>
+                    <span className="menu-item-price">{item.price.toLocaleString()} VNĐ</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+      {/* =========================================
+          PHẦN ĐÁNH GIÁ CỦA KHÁCH HÀNG
+          ========================================= */}
+      <div className="detail-section reviews-section">
+        <h4>⭐ Đánh giá từ cộng đồng</h4>
+        <div className="review-summary">
+          <span className="avg-rating">{location.average_rating ? Number(location.average_rating).toFixed(1) : 'Chưa có'}</span>
+          <span className="review-count">({location.review_count || 0} lượt đánh giá)</span>
         </div>
-      )}
+        {/* TODO: Thêm form gửi review và danh sách review ở đây */}
+      </div>
     </div>
   );
-}
+};
+
+export default LocationListPage;

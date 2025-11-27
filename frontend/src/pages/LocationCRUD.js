@@ -28,9 +28,10 @@ export default function LocationCRUD() {
     is_approved: false,
   });
 
-  // --- STATE TÌM KIẾM & PHÂN TRANG ---
+  // --- STATE TÌM KIẾM, LỌC, SẮP XẾP & PHÂN TRANG ---
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' }); // ✨ Sắp xếp mặc định theo ID
   const itemsPerPage = 10;
 
   // ============================================================
@@ -40,8 +41,10 @@ export default function LocationCRUD() {
     const fetchLocations = async () => {
       setLoading(true);
       try {
-        // Gọi API Admin để lấy tất cả (bao gồm chưa duyệt)
-        const res = await API.get('/locations/admin/all');
+        // ✨ Sửa đổi: Thêm query param `status=all` để đảm bảo lấy tất cả địa điểm
+        const res = await API.get('/locations/admin/all', {
+          params: { status: 'all' }
+        });
         setLocations(res.data.data);
       } catch (err) {
         console.error("Lỗi tải danh sách:", err);
@@ -177,15 +180,49 @@ export default function LocationCRUD() {
   // ============================================================
   // 5. LOGIC LỌC & PHÂN TRANG
   // ============================================================
-  const filteredLocations = useMemo(() => {
-    return locations.filter(loc => 
+
+  // ✨ Hàm xử lý khi click vào header để sắp xếp
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    // Nếu click lại cột đang sắp xếp, đảo chiều
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Quay về trang 1 khi sắp xếp lại
+  };
+
+  // ✨ Dùng useMemo để tối ưu việc lọc và sắp xếp
+  const processedLocations = useMemo(() => {
+    let sortableItems = [...locations];
+
+    // 1. Lọc theo từ khóa tìm kiếm
+    sortableItems = sortableItems.filter(loc => 
       loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       loc.address.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [locations, searchTerm]);
 
-  const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
-  const currentData = filteredLocations.slice(
+    // 2. Sắp xếp
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        // Xử lý giá trị null hoặc undefined
+        const valA = a[sortConfig.key] === null || a[sortConfig.key] === undefined ? '' : a[sortConfig.key];
+        const valB = b[sortConfig.key] === null || b[sortConfig.key] === undefined ? '' : b[sortConfig.key];
+
+        if (valA < valB) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [locations, searchTerm, sortConfig]);
+
+  const totalPages = Math.ceil(processedLocations.length / itemsPerPage);
+  const currentData = processedLocations.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -193,6 +230,14 @@ export default function LocationCRUD() {
   // ============================================================
   // RENDER GIAO DIỆN
   // ============================================================
+
+  // ✨ Helper để thêm class cho mũi tên sắp xếp
+  const getSortIndicator = (name) => {
+    if (!sortConfig || sortConfig.key !== name) return null;
+    if (sortConfig.direction === 'ascending') return ' ▲';
+    return ' ▼';
+  };
+
 
   // --- VIEW 1: FORM NHẬP LIỆU ---
   if (view === 'form') {
@@ -294,12 +339,24 @@ export default function LocationCRUD() {
           <table className="crud-table">
             <thead>
               <tr>
-                <th style={{width: '5%'}}>ID</th>
-                <th style={{width: '25%'}}>Tên địa điểm</th>
-                <th style={{width: '30%'}}>Địa chỉ</th>
-                <th style={{width: '10%'}}>Trạng thái</th>
-                <th style={{width: '15%'}}>Người tạo</th>
-                <th style={{width: '15%'}}>Hành động</th>
+                <th style={{width: '5%'}} onClick={() => requestSort('id')}>
+                  ID{getSortIndicator('id')}
+                </th>
+                <th style={{width: '25%'}} onClick={() => requestSort('name')}>
+                  Tên địa điểm{getSortIndicator('name')}
+                </th>
+                <th style={{width: '30%'}} onClick={() => requestSort('address')}>
+                  Địa chỉ{getSortIndicator('address')}
+                </th>
+                <th style={{width: '10%'}} onClick={() => requestSort('is_approved')}>
+                  Trạng thái{getSortIndicator('is_approved')}
+                </th>
+                <th style={{width: '15%'}} onClick={() => requestSort('created_by_username')}>
+                  Người tạo{getSortIndicator('created_by_username')}
+                </th>
+                <th style={{width: '15%'}} className="no-sort">
+                  Hành động
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -318,7 +375,7 @@ export default function LocationCRUD() {
                       <span className="badge pending">Pending</span>
                     )}
                   </td>
-                  <td>{loc.created_by_user_id ? `User #${loc.created_by_user_id}` : 'Admin'}</td>
+                  <td>{loc.created_by_username || (loc.created_by_user_id ? `User #${loc.created_by_user_id}` : 'Admin')}</td>
                   <td>
                     <div className="action-buttons">
                       {!loc.is_approved && (

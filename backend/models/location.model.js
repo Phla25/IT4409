@@ -15,6 +15,23 @@ class Location {
     return result.rows;
   }
 
+  // ✨ [ADMIN READ ALL] Lấy tất cả địa điểm (bao gồm cả chưa duyệt) cho trang quản lý
+  static async getAllForAdmin() {
+    const sql = `
+      SELECT 
+        l.id, l.name, l.description, l.address, l.district, 
+        l.latitude, l.longitude, l.phone_number, 
+        l.min_price, l.max_price, l.average_rating, l.review_count, 
+        l.is_approved, l.created_by_user_id,
+        u.username as created_by_username
+      FROM Locations l
+      LEFT JOIN Users u ON l.created_by_user_id = u.id
+      ORDER BY l.id ASC;
+    `;
+    const result = await db.query(sql);
+    return result.rows;
+  }
+
   // [READ NEARBY] Lấy địa điểm gần đó (Geospatial Query)
   static async getNearby(userLat, userLng, radiusKm) {
     const radiusMiles = radiusKm / 1.60934; 

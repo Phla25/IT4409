@@ -8,8 +8,11 @@ export default function Sidebar({ isOpen, onCloseMobile }) {
 
   const menuItems = [
     { label: '🏠 Trang chủ', path: '/' },
-    { label: '📍 Tìm quanh đây', path: '/nearby' }, // Bạn có thể tách route này nếu muốn
   ];
+
+  if (userRole === 'user') {
+    menuItems.push({ label: '📍 Tìm quanh đây', path: '/nearby' });
+  }
 
   if (userRole === 'admin') {
     menuItems.push({ label: '⚙️ Quản lý địa điểm', path: '/admin' });
