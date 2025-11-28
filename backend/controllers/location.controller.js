@@ -80,6 +80,12 @@ exports.getAllLocationsForAdmin = async (req, res) => {
 exports.getLocationById = async (req, res) => {
     try {
         const locationId = req.params.id;
+
+        // ✨ [FIX] Thêm validation để chặn ID không hợp lệ (như "undefined" hoặc chữ)
+        if (!locationId || isNaN(parseInt(locationId, 10))) {
+            return res.status(400).json({ message: "ID địa điểm không hợp lệ." });
+        }
+
         const location = await Location.findById(locationId);
 
         if (!location) {
@@ -90,7 +96,9 @@ exports.getLocationById = async (req, res) => {
         // - Nếu là Admin: Xem được mọi trạng thái.
         // - Nếu là User thường hoặc Khách: Chỉ xem được nếu is_approved = true.
         
-        const isAdmin = req.user && req.user.role === 'admin';
+        // ✨ [FIX] Kiểm tra req.user một cách an toàn để không bị lỗi khi user chưa đăng nhập
+        // Toán tử !! đảm bảo isAdmin luôn là true/false.
+        const isAdmin = !!(req.user && req.user.role === 'admin');
         
         if (!isAdmin && !location.is_approved) {
              return res.status(404).json({ message: "Địa điểm này đang chờ duyệt hoặc không khả dụng." });

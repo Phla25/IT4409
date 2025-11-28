@@ -1,153 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import API from '../api';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet'; 
-import './LocationDetailPage.css';
-import { useAuth } from '../context/AuthContext'; // ✨ THÊM DÒNG NÀY
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import useGeolocation from '../hooks/useGeolocation';
+import { calculateDistance } from '../utils/distance';
+import './LocationListPage.css';
 
-// Fix lỗi icon của Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-});
+// Cấu hình API URL
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const LocationListPage = () => {
-  const { id } = useParams(); // Lấy ID từ URL
-  const { search } = useLocation(); // Lấy query params từ URL (ví dụ: ?view=user)
-  const navigate = useNavigate(); // Hook để điều hướng
-  const [location, setLocation] = useState(null);
-  const { userRole } = useAuth(); // ✨ LẤY VAI TRÒ USER
-
-  // ✨ LOGIC MỚI: KIỂM TRA QUYỀN ADMIN VÀ CHẾ ĐỘ XEM
-  const queryParams = new URLSearchParams(search);
-  const isUserViewForced = queryParams.get('view') === 'user';
-  const isAdmin = userRole === 'admin' && !isUserViewForced;
-
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  
+  // --- PHÂN TRANG ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12; // Hiển thị 12 item/trang
+
+  // Lấy vị trí người dùng
+  const userLocation = useGeolocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLocation = async () => {
+    if (!userLocation.loaded) return;
+
+    if (userLocation.error) {
+      setLoading(false);
+      setError("Không thể xác định vị trí của bạn. Hãy bật GPS và thử lại.");
+      return;
+    }
+
+    const fetchNearby = async () => {
       try {
         setLoading(true);
-        // Gọi API để lấy chi tiết địa điểm theo ID
-        const response = await API.get(`/locations/${id}`);
-        setLocation(response.data.data);
-        setError('');
+        const { lat, lng } = userLocation.coordinates;
+        
+        // Gọi API tìm quán gần đây (Bán kính mặc định 5km)
+        const response = await axios.get(
+          `${API_BASE}/locations/nearby?lat=${lat}&lng=${lng}&radius=5`
+        );
+
+        if (response.data.success) {
+          setLocations(response.data.data);
+        } else {
+          setError("Không tải được dữ liệu.");
+        }
       } catch (err) {
-        console.error('Lỗi tải chi tiết địa điểm:', err);
-        setError('Không thể tải thông tin địa điểm. Vui lòng thử lại.');
+        console.error("Lỗi tải danh sách:", err);
+        setError("Lỗi kết nối máy chủ hoặc API bị lỗi.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLocation();
-  }, [id]); // Chạy lại effect khi ID thay đổi
+    fetchNearby();
+  }, [userLocation.loaded, userLocation.error]);
 
-  if (loading) {
-    return <div className="detail-page-loading">⏳ Đang tải thông tin...</div>;
-  }
+  // --- LOGIC TÍNH TOÁN ITEM CHO TRANG HIỆN TẠI ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentLocations = locations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(locations.length / itemsPerPage);
 
-  if (error) {
-    return <div className="detail-page-error">❌ {error}</div>;
-  }
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      // Cuộn lên đầu danh sách khi chuyển trang
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-  if (!location) {
-    return <div className="detail-page-error">Không tìm thấy địa điểm.</div>;
-  }
-
-  const position = [location.latitude, location.longitude];
+  const getDistance = (loc) => {
+    if (!userLocation.coordinates || !userLocation.coordinates.lat) return 0;
+    return calculateDistance(
+      userLocation.coordinates.lat,
+      userLocation.coordinates.lng,
+      parseFloat(loc.latitude),
+      parseFloat(loc.longitude)
+    ).toFixed(2);
+  };
 
   return (
-    <div className="location-detail-page">
-      <div className="detail-header">
-        <button onClick={() => navigate(-1)} className="back-button">
-          &larr; Quay lại
+    <div className="list-page-container">
+      <div className="list-header">
+        <h2>📍 Địa điểm gần bạn (5km)</h2>
+        <button className="back-btn" onClick={() => navigate('/')}>
+          ← Xem bản đồ
         </button>
-        <h1>{location.name}</h1>
       </div>
 
-      <div className="detail-content-layout">
-        <div className="detail-info-panel">
-          <h3>Thông tin chi tiết</h3>
-          <p><strong>📍 Địa chỉ:</strong> {location.address}, {location.district}</p>
-          {location.description && <p><strong>📝 Mô tả:</strong> {location.description}</p>}
-          {location.phone_number && <p><strong>📞 Điện thoại:</strong> {location.phone_number}</p>}
-          {(location.min_price > 0 || location.max_price > 0) && (
-            <p>
-              <strong>💰 Mức giá:</strong> {location.min_price.toLocaleString()} - {location.max_price.toLocaleString()} VNĐ
-            </p>
-          )}
-          {/* ✨ CHỈ HIỂN THỊ TRẠNG THÁI CHO ADMIN */}
-          {isAdmin && (
-            <p>
-              <strong>Trạng thái:</strong>
-              <span className={`status-badge ${location.is_approved ? 'approved' : 'pending'}`}>{location.is_approved ? 'Đã duyệt' : 'Chờ duyệt'}</span>
-            </p>
-          )}
-        </div>
+      {loading && <div className="loading-state">⏳ Đang tìm các quán ngon quanh đây...</div>}
+      
+      {error && <div className="error-state">⚠️ {error}</div>}
 
-        <div className="detail-map-panel">
-          <MapContainer center={position} zoom={16} scrollWheelZoom={false} className="detail-map">
-            <TileLayer
-              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-              attribution="Google Maps"
-            />
-            <Marker position={position}>
-              <Popup>{location.name}</Popup>
-            </Marker>
-          </MapContainer>
+      {!loading && !error && locations.length === 0 && (
+        <div className="empty-state">
+          <p>Không tìm thấy địa điểm nào trong bán kính 5km.</p>
+          <button className="retry-btn" onClick={() => window.location.reload()}>Thử lại</button>
         </div>
-      </div>
+      )}
 
-          {/* ✨ MỤC HÌNH ẢNH CỦA QUÁN */}
-          {location.images && location.images.length > 0 && (
-            <div className="detail-section">
-              <h4>📷 Hình ảnh</h4>
-              <div className="image-gallery-container">
-                {location.images.map((image, index) => (
-                  <a key={image.id || index} href={image.url} target="_blank" rel="noopener noreferrer">
-                    <img 
-                      src={image.url} 
-                      alt={`${location.name} - ảnh ${index + 1}`} 
-                      className="gallery-image" 
-                    />
-                  </a>
-                ))}
+      {/* Grid hiển thị các item của trang hiện tại */}
+      <div className="locations-grid">
+        {currentLocations.map((loc) => (
+          <div key={loc.id} className="location-card" onClick={() => navigate(`/locations/${loc.id}`)}>
+            <div className="card-image">
+              <img 
+                src={loc.images && loc.images.length > 0 
+                  ? loc.images[0].url 
+                  : 'https://via.placeholder.com/300x200?text=No+Image'} 
+                alt={loc.name} 
+              />
+              <span className="distance-badge">{getDistance(loc)} km</span>
+            </div>
+            
+            <div className="card-content">
+              <h3 className="card-title">{loc.name}</h3>
+              <p className="card-address">🏠 {loc.address}</p>
+              
+              <div className="card-footer">
+                <span className="card-price">
+                  {loc.min_price > 0 ? `${loc.min_price.toLocaleString()}đ` : ''} 
+                  {loc.max_price > 0 ? ` - ${loc.max_price.toLocaleString()}đ` : ''}
+                </span>
+                <button className="detail-btn">Xem chi tiết</button>
               </div>
             </div>
-          )}
-
-          {/* ✨ MỤC THỰC ĐƠN CÁC MÓN ĂN */}
-          {location.menu && location.menu.length > 0 && (
-            <div className="detail-section">
-              <h4>📜 Thực đơn</h4>
-              <ul className="menu-list">
-                {location.menu.map((item, index) => (
-                  <li key={index} className="menu-item">
-                    <span className="menu-item-name">{item.name}</span>
-                    <span className="menu-item-price">{item.price.toLocaleString()} VNĐ</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-      {/* =========================================
-          PHẦN ĐÁNH GIÁ CỦA KHÁCH HÀNG
-          ========================================= */}
-      <div className="detail-section reviews-section">
-        <h4>⭐ Đánh giá từ cộng đồng</h4>
-        <div className="review-summary">
-          <span className="avg-rating">{location.average_rating ? Number(location.average_rating).toFixed(1) : 'Chưa có'}</span>
-          <span className="review-count">({location.review_count || 0} lượt đánh giá)</span>
-        </div>
-        {/* TODO: Thêm form gửi review và danh sách review ở đây */}
+          </div>
+        ))}
       </div>
+
+      {/* --- PHÂN TRANG CONTROL --- */}
+      {!loading && !error && locations.length > itemsPerPage && (
+        <div className="pagination-controls">
+          <button 
+            className="pagination-btn" 
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+          >
+            &laquo; Trước
+          </button>
+          
+          <span className="pagination-info">
+            Trang <strong>{currentPage}</strong> / {totalPages}
+          </span>
+          
+          <button 
+            className="pagination-btn" 
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
+          >
+            Sau &raquo;
+          </button>
+        </div>
+      )}
     </div>
   );
 };

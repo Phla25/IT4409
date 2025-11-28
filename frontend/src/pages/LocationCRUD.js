@@ -102,7 +102,8 @@ export default function LocationCRUD() {
         await API.put(`/locations/${currentId}`, formData);
         alert("Cập nhật thành công!");
       } else {
-        await API.post('/locations', formData); // API create (nhớ chỉnh route backend ko cần /propose nếu là admin)
+        // ✨ [FIX] Sửa lại API endpoint để khớp với backend route là '/propose'
+        await API.post('/locations/propose', formData); 
         alert("Thêm mới thành công!");
       }
       setRefresh(prev => prev + 1);

@@ -32,15 +32,30 @@ const LocationDetailPage = () => {
 
   useEffect(() => {
     const fetchLocation = async () => {
+      // ✨ [FIX] Ngăn chặn gọi API nếu không có ID
+      if (!id || id === 'undefined') {
+        setLoading(false);
+        setError("ID địa điểm không hợp lệ hoặc không được cung cấp.");
+        return; // Dừng thực thi
+      }
+      
       try {
         setLoading(true);
         // Gọi API để lấy chi tiết địa điểm theo ID
         const response = await API.get(`/locations/${id}`);
-        setLocation(response.data.data);
-        setError('');
+        
+        if (response.data && response.data.data) {
+          setLocation(response.data.data);
+          setError('');
+        } else {
+          setLocation(null);
+          setError("Không tìm thấy thông tin cho địa điểm này.");
+        }
+
       } catch (err) {
         console.error('Lỗi tải chi tiết địa điểm:', err);
-        setError('Không thể tải thông tin địa điểm. Vui lòng thử lại.');
+        const errorMessage = err.response?.data?.message || 'Không thể tải thông tin địa điểm. Vui lòng thử lại.';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
