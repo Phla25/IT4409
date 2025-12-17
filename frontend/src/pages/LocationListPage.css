@@ -1,0 +1,197 @@
+/* src/LocationListPage.css */
+
+.list-page-container {
+  padding: 30px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 80vh;
+  background-color: var(--bg-color, #f9fafb); 
+  box-sizing: border-box;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 15px;
+  flex-wrap: wrap; /* Cho phép xuống dòng */
+  gap: 15px;
+}
+
+.list-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.back-btn {
+  background: white;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.back-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* --- GRID LAYOUT --- */
+.locations-grid {
+  display: grid;
+  /* Tự động điều chỉnh số cột, tối thiểu 280px, nếu không đủ chỗ thì xuống dòng */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+/* --- CARD STYLE --- */
+.location-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* (Giữ nguyên các style card-image, card-content, v.v... như cũ nhưng thêm touch-action) */
+.location-card:active {
+    transform: scale(0.98); /* Hiệu ứng nhấn trên mobile */
+}
+
+.card-image {
+  height: 180px;
+  width: 100%;
+  position: relative;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.distance-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  backdrop-filter: blur(2px);
+}
+
+.card-content {
+  padding: 16px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  margin: 0 0 8px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.card-address {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.card-price {
+  font-weight: bold;
+  color: #16a34a;
+  font-size: 0.95rem;
+}
+
+.detail-btn {
+  background: transparent;
+  color: #3b82f6;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Pagination Styles (Giữ nguyên) */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap; /* Cho phép xuống dòng nếu quá chật */
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 600px) {
+  .list-page-container {
+    padding: 15px; /* Giảm padding */
+  }
+
+  .list-header {
+    flex-direction: column; /* Xếp dọc header */
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .list-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .back-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .locations-grid {
+    grid-template-columns: 1fr; /* 1 cột duy nhất trên mobile nhỏ */
+    gap: 20px;
+  }
+}

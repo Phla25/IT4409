@@ -1,0 +1,419 @@
+/* src/LocationDetailPage.css */
+
+/* --- TỔNG THỂ --- */
+.location-detail-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #fff; /* Nền trắng sạch sẽ */
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.4s ease-out;
+    box-sizing: border-box;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- HEADER --- */
+.detail-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.detail-header h1 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 2rem;
+    flex: 1;
+    line-height: 1.3;
+}
+
+.back-button {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #555;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.back-button:hover {
+    background-color: #f0f2f5;
+    border-color: #ccc;
+    color: #333;
+}
+
+/* --- LAYOUT CHÍNH (INFO & MAP) --- */
+.detail-content-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Map rộng hơn info một chút */
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+/* Cột thông tin */
+.detail-info-panel {
+    background: #fdfdfd;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #f0f0f0;
+}
+
+.detail-info-panel h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #3498db;
+    display: inline-block;
+}
+
+.detail-info-panel p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+    margin-bottom: 12px;
+}
+
+.detail-info-panel strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Badge trạng thái (cho Admin) */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 8px;
+}
+
+.status-badge.approved {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* Cột bản đồ */
+.detail-map-panel {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    height: 400px; /* Chiều cao cố định trên Desktop */
+    position: relative;
+    z-index: 1;
+}
+
+.detail-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* --- PHẦN ĐÁNH GIÁ (REVIEWS) --- */
+.reviews-section {
+    border-top: 1px solid #eee;
+    padding-top: 30px;
+}
+
+.reviews-section h4 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+/* Form Đánh Giá */
+.review-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border: 1px solid #e9ecef;
+}
+
+.rating-select {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating-select .star {
+    font-size: 28px;
+    color: #d1d1d1;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-select .star:hover,
+.rating-select .star.active {
+    color: #f1c40f; /* Màu vàng */
+}
+
+.rating-text {
+    margin-left: 10px;
+    font-weight: 500;
+    color: #666;
+}
+
+.review-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.review-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.btn-submit-review {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-submit-review:hover {
+    background-color: #2980b9;
+}
+
+.btn-submit-review:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+.login-prompt {
+    background: #fff3cd;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* Danh sách Review */
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-item {
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.review-item:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reviewer-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #3498db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.reviewer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reviewer-name {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.review-date {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+.review-rating {
+    color: #f1c40f;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.review-comment {
+    color: #444;
+    line-height: 1.6;
+    background: #fafafa;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.no-reviews {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 20px;
+}
+.favorite-btn {
+    /* Cơ bản: Biến thành nút tròn */
+    background: white;
+    border: none; /* Loại bỏ viền mặc định xấu xí */
+    width: 44px; /* Kích thước cố định để tròn đều */
+    height: 44px;
+    border-radius: 50%;
+    
+    /* Căn giữa icon bên trong */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Thẩm mỹ & Tương tác */
+    cursor: pointer;
+    font-size: 1.3rem; /* Kích thước trái tim */
+    color: #95a5a6; /* Màu xám mặc định khi chưa thích */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); /* Bóng đổ nhẹ tạo chiều sâu */
+    
+    /* Hiệu ứng chuyển động mượt mà */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Hiệu ứng nảy nhẹ */
+    outline: none; /* Bỏ viền xanh khi click trên một số trình duyệt */
+}
+
+/* Trạng thái Hover: Khi di chuột vào */
+.favorite-btn:hover {
+    transform: scale(1.1); /* Phóng to nhẹ */
+    background-color: #f8f9fa; /* Nền xám cực nhạt */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12); /* Bóng đổ đậm hơn chút */
+}
+
+/* Trạng thái Active: Khi đã Yêu thích (có class .active) */
+.favorite-btn.active {
+    color: #e74c3c; /* Đổi màu icon thành đỏ (mặc dù trong JSX đã có, thêm ở đây để chắc chắn) */
+    background-color: #ffecec; /* Nền màu hồng/đỏ rất nhạt để làm nổi bật trạng thái active */
+    box-shadow: 0 3px 10px rgba(231, 76, 60, 0.2); /* Bóng đổ màu đỏ nhẹ */
+}
+
+/* Hiệu ứng khi click chuột xuống */
+.favorite-btn:active {
+    transform: scale(0.95); /* Thu nhỏ lại một chút tạo cảm giác nhấn thật */
+}
+/* Điều chỉnh lại trên mobile một chút cho gọn nếu cần */
+@media (max-width: 768px) {
+    .favorite-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+}
+
+/* --- RESPONSIVE / MOBILE --- */
+@media (max-width: 992px) {
+    .detail-content-layout {
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .location-detail-page {
+        margin: 0;
+        border-radius: 0; /* Full màn hình mobile */
+        padding: 15px;
+    }
+
+    .detail-header {
+        flex-direction: column-reverse; /* Đưa nút Back lên trên tiêu đề */
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .detail-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .back-button {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+
+    /* Chuyển Layout thành 1 cột */
+    .detail-content-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Đảo thứ tự: Map lên trên, Info xuống dưới cho dễ nhìn trên đt */
+    .detail-map-panel {
+        order: -1; 
+        height: 300px; /* Map thấp hơn trên mobile */
+    }
+
+    .detail-info-panel {
+        padding: 15px;
+    }
+
+    /* Form review nhỏ lại */
+    .review-form {
+        padding: 15px;
+    }
+
+    .reviewer-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}

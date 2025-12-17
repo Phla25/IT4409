@@ -1,0 +1,158 @@
+/* src/pages/AuthModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px; /* Padding để modal không dính sát mép màn hình */
+  box-sizing: border-box;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px; /* Chỉ giới hạn tối đa, còn lại co giãn */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+  max-height: 90vh; /* Tránh modal dài quá màn hình */
+  overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  border: none;
+  background: none;
+  font-size: 28px; /* To hơn chút cho dễ bấm trên mobile */
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+  line-height: 1;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  margin-top: 0;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: block;
+  color: #555;
+}
+
+.error-msg {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.role-selector {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap; /* Cho phép xuống dòng nếu cần */
+}
+
+.role-option {
+  cursor: pointer;
+  padding: 8px 15px;
+  border: 2px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.role-option.active {
+  border-color: #e74c3c;
+  background-color: #ffe7e7;
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px; /* Input cao hơn cho dễ bấm */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 10px;
+}
+
+.submit-btn:hover { background-color: #a93226; }
+.submit-btn:disabled { background-color: #ccc; }
+
+.switch-mode {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #555;
+}
+
+.switch-mode span {
+  color: #e74c3c;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 5px; /* Tăng diện tích bấm */
+}
+
+/* --- MOBILE SPECIFIC --- */
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 20px;
+    }
+    .role-selector {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Chia đôi cột trên mobile */
+    }
+    .role-option {
+        justify-content: center;
+    }
+}
