@@ -117,32 +117,28 @@ exports.getLocationById = async (req, res) => {
 // [AUTH REQUIRED] Tạo địa điểm mới
 exports.createLocation = async (req, res) => {
     try {
-        // req.user lấy từ Middleware xác thực (AuthMiddleware)
-        if (!req.user || !req.user.id) {
-            return res.status(401).json({ message: "Bạn cần đăng nhập để thực hiện chức năng này." });
-        }
+        if (!req.user) return res.status(401).json({ message: "Vui lòng đăng nhập." });
+
+        // Logic phân quyền: Admin tạo thì duyệt luôn, User tạo thì chờ duyệt
+        const isAutoApproved = req.user.role === 'admin';
 
         const newLocationData = {
             ...req.body,
             created_by_user_id: req.user.id,
-            is_approved: false // Mặc định user tạo là chưa duyệt, Admin duyệt sau
+            is_approved: isAutoApproved, // User thường sẽ là FALSE
+            created_at: new Date()
         };
-
-        // Nếu người tạo là Admin, có thể cho duyệt luôn
-        if (req.user.role === 'admin') {
-            newLocationData.is_approved = true;
-        }
 
         const newLocation = await Location.create(newLocationData);
         
         res.status(201).json({ 
             success: true, 
-            message: req.user.role === 'admin' ? "Tạo địa điểm thành công." : "Đề xuất địa điểm thành công, vui lòng chờ duyệt.",
+            message: isAutoApproved ? "Đã tạo địa điểm mới." : "Cảm ơn bạn! Địa điểm đang chờ Admin duyệt.",
             data: newLocation 
         });
     } catch (error) {
-        console.error("Create location error:", error);
-        res.status(500).json({ message: "Không thể tạo địa điểm mới. Vui lòng kiểm tra dữ liệu." });
+        console.error("Create Error:", error);
+        res.status(500).json({ message: "Lỗi server." });
     }
 };
 
@@ -182,5 +178,25 @@ exports.batchCreateLocations = async (req, res) => {
     res.status(200).json({ message: "Batch create working" });
   } catch (error) {
     res.status(500).json({ message: "Error" });
+  }
+};
+exports.searchLocations = async (req, res) => {
+  try {
+    const { keyword } = req.query; // Lấy keyword từ URL: ?keyword=phở
+
+    if (!keyword || keyword.trim() === '') {
+      return res.status(400).json({ message: "Vui lòng nhập từ khóa tìm kiếm" });
+    }
+
+    const locations = await Location.search(keyword);
+    
+    return res.status(200).json({
+      success: true,
+      count: locations.length,
+      data: locations
+    });
+  } catch (error) {
+    console.error("Search Error:", error);
+    return res.status(500).json({ message: "Lỗi khi tìm kiếm địa điểm" });
   }
 };

@@ -20,6 +20,10 @@ export default function Sidebar({ isOpen, onCloseMobile }) {
     menuItems.push({ label: '⚙️ Quản lý địa điểm', path: '/admin' });
   }
 
+  if (userRole === 'admin') {
+    menuItems.push({ label: '🍽 Quản lý thực đơn', path: '/admin/menu-manager' });
+  }
+
   return (
     <>
       {/* Overlay đen mờ chỉ hiện ở mobile khi sidebar mở */}

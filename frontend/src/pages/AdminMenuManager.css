@@ -1,0 +1,119 @@
+/* src/pages/AdminMenuManager.css */
+
+.admin-menu-container {
+    padding: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+    min-height: 90vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1 { color: #2c3e50; margin-bottom: 20px; }
+
+/* --- TABS NAVIGATION --- */
+.tabs-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.tab-btn {
+    padding: 12px 25px;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #6c757d;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover { color: #3498db; background: #eef6fc; }
+
+.tab-btn.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+}
+
+/* --- FORM & PANELS --- */
+.panel {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #495057; }
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%; padding: 10px;
+    border: 1px solid #ced4da; border-radius: 6px;
+    font-size: 1rem; box-sizing: border-box;
+}
+.form-group input:focus { border-color: #3498db; outline: none; }
+
+.btn-submit {
+    background: #27ae60; color: white;
+    border: none; padding: 10px 20px;
+    border-radius: 6px; font-weight: bold; cursor: pointer;
+    font-size: 1rem;
+}
+.btn-submit:hover { background: #219150; }
+.btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+/* --- SEARCH RESULTS (GỢI Ý TÌM KIẾM) --- */
+.search-wrapper { position: relative; }
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 6px 6px;
+    max-height: 200px; overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.search-item {
+    padding: 10px 15px; cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+    display: flex; justify-content: space-between;
+}
+.search-item:hover { background: #f8f9fa; color: #3498db; }
+
+/* --- GRID LAYOUT CHO MENU MANAGER --- */
+.menu-manager-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr; /* Cột trái cố định, cột phải co giãn */
+    gap: 30px;
+}
+
+.current-menu-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.menu-card {
+    background: #fff; border: 1px solid #e9ecef;
+    padding: 15px; border-radius: 8px;
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+.menu-card h4 { margin: 0 0 5px; color: #2c3e50; }
+.menu-card .price { font-weight: bold; color: #e67e22; margin-bottom: 10px; }
+.menu-card .desc { font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px; }
+
+.btn-delete {
+    background: #e74c3c; color: white;
+    border: none; padding: 5px 10px;
+    border-radius: 4px; cursor: pointer; align-self: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .menu-manager-grid { grid-template-columns: 1fr; }
+}

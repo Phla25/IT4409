@@ -40,7 +40,8 @@
   font-size: 4rem;
   font-weight: 900;
   margin-bottom: 15px;
-  text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+  color: #c0392b;
+  text-shadow: 2px 2px 10px rgba(157, 16, 16, 0.451);
   letter-spacing: 2px;
   line-height: 1.2;
 }

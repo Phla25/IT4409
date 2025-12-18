@@ -31,7 +31,7 @@ class Location {
         u.username as created_by_username
       FROM locations l
       LEFT JOIN users u ON l.created_by_user_id = u.id
-      ORDER BY l.id ASC;
+      ORDER BY l.is_approved ASC, l.id ASC;
     `;
     const result = await db.query(sql);
     return result.rows;
@@ -60,17 +60,17 @@ class Location {
   }
 
   // [CRUD] CREATE
-  static async create({ name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id }) {
+  static async create({ name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id, is_approved}) {
     const sql = `
       INSERT INTO locations (
         name, description, address, district, latitude, longitude, 
-        phone_number, min_price, max_price, created_by_user_id, is_approved, created_at, updated_at
+        phone_number, min_price, max_price, created_by_user_id, is_approved, created_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
       RETURNING *;
     `;
     
-    const result = await db.query(sql, [name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id]);
+    const result = await db.query(sql, [name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id, is_approved]);
     return result.rows[0];
   }
 
@@ -110,7 +110,7 @@ class Location {
 
     const sql = `
       UPDATE locations 
-      SET ${fields.join(', ')}, updated_at = NOW() 
+      SET ${fields.join(', ')}
       WHERE id = $${paramIndex} 
       RETURNING *;
     `;
@@ -161,6 +161,41 @@ class Location {
     `;
 
     const result = await db.query(sql, values);
+    return result.rows;
+  }
+  static async search(keyword) {
+    if (!keyword) return [];
+
+    const searchTerm = `%${keyword}%`; // Thêm % để tìm kiếm gần đúng (Partial match)
+
+    // Lưu ý: Tên bảng trong SQL dưới đây mình để chữ thường (locations, categories...) 
+    // để khớp với DB PostgreSQL mặc định.
+    const sql = `
+      SELECT DISTINCT l.* FROM locations l
+      
+      -- Join bảng Danh mục (để tìm: "Quán Cafe", "Sân vườn"...)
+      LEFT JOIN locationcategories lc ON l.id = lc.location_id
+      LEFT JOIN categories c ON lc.category_id = c.id
+      
+      -- Join bảng Món ăn (để tìm: "Phở", "Trà sữa"...)
+      LEFT JOIN menuitems mi ON l.id = mi.location_id
+      LEFT JOIN basedishes bd ON mi.base_dish_id = bd.id
+      
+      WHERE l.is_approved = TRUE
+      AND (
+           l.name ILIKE $1          -- Tìm theo tên quán
+        OR l.address ILIKE $1       -- Tìm theo địa chỉ
+        OR l.district ILIKE $1      -- Tìm theo quận
+        OR c.name ILIKE $1          -- Tìm theo tên danh mục
+        OR bd.name ILIKE $1         -- Tìm theo tên món gốc
+        OR mi.custom_name ILIKE $1  -- Tìm theo tên món riêng tại quán
+      )
+      ORDER BY l.average_rating DESC
+      LIMIT 20;
+    `;
+    
+    // ILIKE là lệnh so sánh không phân biệt hoa thường của PostgreSQL
+    const result = await db.query(sql, [searchTerm]);
     return result.rows;
   }
 }

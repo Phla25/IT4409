@@ -24,6 +24,7 @@
   font-size: 1.8rem;
   font-weight: 700;
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
@@ -118,6 +119,7 @@
   margin-bottom: 16px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex-grow: 1;
@@ -168,6 +170,79 @@
   font-weight: 600;
   cursor: pointer;
 }
+.search-container {
+    max-width: 600px;
+    margin: 0 auto 30px auto; /* Căn giữa và cách phần dưới */
+    padding: 0 10px;
+}
+
+.search-box {
+    display: flex;
+    background: white;
+    border: 2px solid #e5e7eb; /* Màu viền giống theme cũ */
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+    border-color: #3b82f6; /* Màu xanh chủ đạo của theme cũ */
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1rem;
+    outline: none;
+    color: #1f2937;
+}
+
+.search-box button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0 25px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-box button:hover {
+    background: #2563eb; /* Darker blue */
+}
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.retry-btn {
+    margin-top: 15px;
+    padding: 8px 20px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #374151;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.retry-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
 
 /* --- MOBILE RESPONSIVE --- */
 @media (max-width: 600px) {
@@ -194,4 +269,13 @@
     grid-template-columns: 1fr; /* 1 cột duy nhất trên mobile nhỏ */
     gap: 20px;
   }
+}
+@media (max-width: 600px) {
+    .search-box input {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+    .search-box button {
+        padding: 0 15px;
+    }
 }

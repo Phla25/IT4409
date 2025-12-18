@@ -12,7 +12,7 @@ import LocationDetailPage from './pages/LocationDetailPage.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import FavoriteLocationsPage from './pages/FavoriteLocationsPage';
-
+import AdminMenuManager from './pages/AdminMenuManager';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // --- TRANG BÁO LỖI QUYỀN (Component nhỏ nội bộ) ---
@@ -59,7 +59,14 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
-        
+        <Route 
+          path="/admin/menu-manager" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminMenuManager />
+            </ProtectedRoute>
+          } 
+        />
         {/* 👇 THÊM ROUTE NÀY */}
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 

@@ -4,19 +4,15 @@ const router = express.Router();
 const locationController = require('../controllers/location.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 
-// ==========================================
-// ✨ [FIX] SẮP XẾP LẠI ROUTE THEO ĐÚNG THỨ TỰ ƯU TIÊN
-// Nguyên tắc: Route tĩnh (static) phải được khai báo TRƯỚC route động (dynamic).
-// ==========================================
-
 // --- 1. CÁC ROUTE TĨNH (STATIC ROUTES) ---
+// (Đặt các route cụ thể lên đầu)
 
 // Public routes
 router.get('/', locationController.getAllLocations);
 router.get('/nearby', locationController.getNearbyLocations);
-router.get('/:id', authMiddleware.verifyTokenOptional, locationController.getLocationById);
+router.get('/search', locationController.searchLocations);
 
-// Admin-only routes
+// Admin-only routes (PHẢI ĐẶT TRƯỚC /:id)
 router.get(
   '/admin/all', 
   [authMiddleware.verifyToken, authMiddleware.isAdmin], 
@@ -24,6 +20,13 @@ router.get(
 );
 
 // Authenticated routes
+// 👇 THÊM DÒNG NÀY ĐỂ SỬA LỖI 404
+router.post(
+  '/', 
+  authMiddleware.verifyToken, 
+  locationController.createLocation
+);
+
 router.post(
   '/propose', 
   authMiddleware.verifyToken, 
@@ -37,7 +40,10 @@ router.post(
 );
 
 // --- 2. CÁC ROUTE ĐỘNG (DYNAMIC ROUTES) ---
-// Các route này phải được đặt CUỐI CÙNG để không "chặn" các route tĩnh ở trên.
+// (Các route có tham số :id phải đặt xuống cuối cùng)
+
+// Lấy chi tiết địa điểm (Đã chuyển xuống đây)
+router.get('/:id', authMiddleware.verifyTokenOptional, locationController.getLocationById);
 
 // Cập nhật địa điểm
 router.put(

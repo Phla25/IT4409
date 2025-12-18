@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
+// Import thêm các icon cần thiết cho Menu và Edit
+import { FaHeart, FaRegHeart, FaUtensils, FaEdit, FaTimes } from 'react-icons/fa';
 import API from '../api';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet'; 
 import './LocationDetailPage.css';
 import { useAuth } from '../context/AuthContext';
 
-// Fix icon Leaflet
+// Fix icon Leaflet bị lỗi mặc định
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -21,13 +22,20 @@ const LocationDetailPage = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth(); // Lấy thông tin user đăng nhập
 
-  // --- LOGIC PHÂN QUYỀN CƯ DÂN ---
+  // --- LOGIC PHÂN QUYỀN ---
   const isResident = user && userRole === 'user';
+  
+  // State cơ bản
   const [isFavorited, setIsFavorited] = useState(false);
   const [location, setLocation] = useState(null);
-  const [reviews, setReviews] = useState([]); // Chứa danh sách ReviewDTO
+  const [reviews, setReviews] = useState([]); 
   
-  // Form State
+  // ✨ MỚI: State cho Menu Modal
+  const [showMenuModal, setShowMenuModal] = useState(false); 
+  const [menuItems, setMenuItems] = useState([]); 
+  const [loadingMenu, setLoadingMenu] = useState(false);
+
+  // Form State (Review)
   const [userRating, setUserRating] = useState(5);
   const [userComment, setUserComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -35,10 +43,11 @@ const LocationDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Admin view check
+  // Check quyền Admin (có thể view như user nếu muốn test)
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const isAdmin = userRole === 'admin' && queryParams.get('view') !== 'user';
+  const isUser = userRole === 'user' || queryParams.get('view') === 'user';
 
   // --- FETCH DỮ LIỆU ---
   useEffect(() => {
@@ -51,7 +60,7 @@ const LocationDetailPage = () => {
         const locRes = await API.get(`/locations/${id}`);
         setLocation(locRes.data.data);
 
-        // 2. Lấy danh sách đánh giá (API trả về ReviewDTO)
+        // 2. Lấy danh sách đánh giá
         const revRes = await API.get(`/reviews`, { params: { location_id: id } });
         setReviews(revRes.data.data || []);
       } catch (err) {
@@ -64,6 +73,7 @@ const LocationDetailPage = () => {
 
     fetchData();
   }, [id]);
+
   // --- KIỂM TRA YÊU THÍCH ---
   useEffect(() => {
     if (user && id) {
@@ -72,6 +82,23 @@ const LocationDetailPage = () => {
          .catch(err => console.error(err));
     }
   }, [user, id]);
+
+  // --- XỬ LÝ MENU (THỰC ĐƠN) ---
+  const handleOpenMenu = async () => {
+    setShowMenuModal(true);
+    // Chỉ gọi API nếu chưa có dữ liệu menu
+    if (menuItems.length === 0) {
+        setLoadingMenu(true);
+        try {
+            const res = await API.get(`/locations/${id}/menu`);
+            setMenuItems(res.data.data);
+        } catch (err) {
+            console.error("Lỗi tải menu:", err);
+        } finally {
+            setLoadingMenu(false);
+        }
+    }
+  };
 
   // --- XỬ LÝ GỬI ĐÁNH GIÁ ---
   const handlePostReview = async (e) => {
@@ -105,15 +132,14 @@ const LocationDetailPage = () => {
       setSubmitting(false);
     }
   };
+
   // Hàm xử lý bấm tim
   const handleToggleFavorite = async () => {
     if (!user) return alert("Vui lòng đăng nhập để lưu địa điểm!");
     
     try {
-      // UI Optimistic Update (Đổi màu ngay lập tức cho mượt)
       const newStatus = !isFavorited;
       setIsFavorited(newStatus);
-
       await API.post('/favorites/toggle', { location_id: id });
     } catch (err) {
       console.error(err);
@@ -131,21 +157,34 @@ const LocationDetailPage = () => {
 
   return (
     <div className="location-detail-page">
+      {/* HEADER */}
       <div className="detail-header">
         <button onClick={() => navigate(-1)} className="back-button">&larr; Quay lại</button>
-        <div className="title-section" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '15px' }}>
+        
+        <div className="title-section" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
             <h1>{location.name}</h1>
-            <button 
-                onClick={handleToggleFavorite}
-                className={`favorite-btn ${isFavorited ? 'active' : ''}`}
-                title={isFavorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
-            >
-                {isFavorited ? <FaHeart color="#e74c3c" /> : <FaRegHeart color="#95a5a6" />}
-            </button>
+            
+            {/* CỤM NÚT TÁC VỤ (Action Buttons) */}
+            <div className="action-buttons">
+                {/* Nút Yêu thích */}
+                {isUser && (<button 
+                    onClick={handleToggleFavorite}
+                    className={`action-btn fav-btn ${isFavorited ? 'active' : ''}`}
+                    title={isFavorited ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                >
+                    {isFavorited ? <FaHeart /> : <FaRegHeart />}
+                </button>)}
+
+                {/* Nút Xem Menu */}
+                <button onClick={handleOpenMenu} className="action-btn menu-btn">
+                    <FaUtensils /> Xem thực đơn
+                </button>
+
+            </div>
         </div>
       </div>
 
-      {/* Layout Thông tin & Map */}
+      {/* LAYOUT CHÍNH: THÔNG TIN & MAP */}
       <div className="detail-content-layout">
         <div className="detail-info-panel">
           <h3>Thông tin chi tiết</h3>
@@ -155,12 +194,15 @@ const LocationDetailPage = () => {
               <strong>⭐ Đánh giá:</strong> {location.average_rating ? Number(location.average_rating).toFixed(1) : 'Chưa có'} 
               {' '}({location.review_count || 0} lượt)
           </p>
+          <p><strong>💰 Khoảng giá:</strong> {location.min_price?.toLocaleString()}đ - {location.max_price?.toLocaleString()}đ</p>
+          
           {isAdmin && (
-            <p>
+            <p style={{marginTop: 15}}>
               <strong>Trạng thái:</strong> <span className={`status-badge ${location.is_approved ? 'approved' : 'pending'}`}>{location.is_approved ? 'Đã duyệt' : 'Chờ duyệt'}</span>
             </p>
           )}
         </div>
+        
         <div className="detail-map-panel">
           <MapContainer center={position} zoom={16} scrollWheelZoom={false} className="detail-map">
             <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
@@ -169,11 +211,10 @@ const LocationDetailPage = () => {
         </div>
       </div>
 
-      {/* --- PHẦN ĐÁNH GIÁ (REVIEWS) --- */}
+      {/* PHẦN ĐÁNH GIÁ (REVIEWS) */}
       <div className="detail-section reviews-section">
         <h4>⭐ Đánh giá từ cộng đồng ({reviews.length})</h4>
 
-        {/* Form nhập liệu (Chỉ hiện cho Resident) */}
         {isResident ? (
           <form className="review-form" onSubmit={handlePostReview}>
             <div className="rating-select">
@@ -198,20 +239,16 @@ const LocationDetailPage = () => {
           </div>
         )}
 
-        {/* Danh sách hiển thị (Dùng trường dữ liệu từ DTO) */}
         <div className="review-list">
           {reviews.length === 0 ? <p className="no-reviews">Chưa có đánh giá nào.</p> : reviews.map((rev) => (
             <div key={rev.id} className="review-item">
               <div className="review-header">
                 <div className="reviewer-info">
-                  {/* Hiển thị Avatar nếu có */}
                   <div className="reviewer-avatar">
                     {rev.authorAvatar ? <img src={rev.authorAvatar} alt="avatar" /> : rev.authorName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    {/* Dùng authorName từ DTO */}
                     <div className="reviewer-name">{rev.authorName}</div>
-                    {/* Dùng timeAgo từ DTO */}
                     <div className="review-date">{rev.timeAgo}</div>
                   </div>
                 </div>
@@ -222,6 +259,43 @@ const LocationDetailPage = () => {
           ))}
         </div>
       </div>
+
+      {/* ✨ MODAL HIỂN THỊ MENU */}
+      {showMenuModal && (
+        <div className="menu-modal-overlay" onClick={() => setShowMenuModal(false)}>
+            <div className="menu-modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="menu-modal-header">
+                    <h2>📜 Thực đơn: {location.name}</h2>
+                    <button className="close-modal-btn" onClick={() => setShowMenuModal(false)}>
+                        <FaTimes />
+                    </button>
+                </div>
+                
+                <div className="menu-modal-body">
+                    {loadingMenu ? (
+                        <div className="menu-loading">⏳ Đang tải món ăn...</div>
+                    ) : menuItems.length === 0 ? (
+                        <div className="menu-empty">Quán chưa cập nhật thực đơn.</div>
+                    ) : (
+                        <div className="menu-grid-display">
+                            {menuItems.map((item) => (
+                                <div key={item.id} className="menu-item-display">
+                                    <div className="menu-item-info">
+                                        <h4>{item.custom_name || item.base_dish_name}</h4>
+                                        <p className="menu-desc">{item.description}</p>
+                                    </div>
+                                    <div className="menu-item-price">
+                                        {Number(item.price).toLocaleString()}đ
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+
     </div>
   );
 };
