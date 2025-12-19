@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const locationController = require('../controllers/location.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
+const locationController = require('../controllers/location.controller');
 
 // --- 1. CÁC ROUTE TĨNH (STATIC ROUTES) ---
 // (Đặt các route cụ thể lên đầu)
@@ -11,6 +12,7 @@ const authMiddleware = require('../middlewares/auth.middleware');
 router.get('/', locationController.getAllLocations);
 router.get('/nearby', locationController.getNearbyLocations);
 router.get('/search', locationController.searchLocations);
+router.get('/recommendations/dishes', locationController.getDishRecommendations);
 
 // Admin-only routes (PHẢI ĐẶT TRƯỚC /:id)
 router.get(
