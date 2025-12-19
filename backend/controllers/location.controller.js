@@ -119,18 +119,31 @@ exports.createLocation = async (req, res) => {
     try {
         if (!req.user) return res.status(401).json({ message: "Vui lòng đăng nhập." });
 
-        // Logic phân quyền: Admin tạo thì duyệt luôn, User tạo thì chờ duyệt
         const isAutoApproved = req.user.role === 'admin';
 
         const newLocationData = {
             ...req.body,
             created_by_user_id: req.user.id,
-            is_approved: isAutoApproved, // User thường sẽ là FALSE
+            is_approved: isAutoApproved,
             created_at: new Date()
         };
 
         const newLocation = await Location.create(newLocationData);
         
+        // 👇👇👇 SOCKET LOGIC BẮT ĐẦU TỪ ĐÂY 👇👇👇
+        // Nếu người tạo KHÔNG phải admin (tức là cần duyệt), thì bắn thông báo
+        if (!isAutoApproved) {
+            const io = req.app.get("socketio"); // Lấy biến io đã set ở server.js
+            
+            // Gửi sự kiện 'new_proposal' tới tất cả người trong phòng 'admin_room'
+            io.to("admin_room").emit("new_proposal", {
+                message: `📢 Có địa điểm mới chờ duyệt: ${newLocationData.name}`,
+                data: newLocation
+            });
+            console.log("Socket sent: new_proposal");
+        }
+        // 👆👆👆 KẾT THÚC SOCKET LOGIC 👆👆👆
+
         res.status(201).json({ 
             success: true, 
             message: isAutoApproved ? "Đã tạo địa điểm mới." : "Cảm ơn bạn! Địa điểm đang chờ Admin duyệt.",
@@ -141,7 +154,6 @@ exports.createLocation = async (req, res) => {
         res.status(500).json({ message: "Lỗi server." });
     }
 };
-
 // [ADMIN] Cập nhật địa điểm
 exports.updateLocation = async (req, res) => {
     try {
@@ -152,7 +164,10 @@ exports.updateLocation = async (req, res) => {
         if (!updatedLocation) {
             return res.status(404).json({ message: "Không tìm thấy địa điểm để cập nhật." });
         }
-        
+        // 👇👇👇 THÊM SOCKET: Báo cho Admin cập nhật lại số lượng 👇👇👇
+        const io = req.app.get("socketio");
+        io.to("admin_room").emit("refresh_pending_count"); 
+        // 👆👆👆
         res.status(200).json({ success: true, message: "Cập nhật thành công.", data: updatedLocation });
     } catch (error) {
         console.error("Update error:", error);
@@ -165,7 +180,10 @@ exports.deleteLocation = async (req, res) => {
     try {
         const deleted = await Location.delete(req.params.id);
         if (!deleted) return res.status(404).json({ message: "Không tìm thấy địa điểm để xóa." });
-        
+        // 👇👇👇 THÊM SOCKET: Xóa xong cũng phải cập nhật lại số 👇👇👇
+        const io = req.app.get("socketio");
+        io.to("admin_room").emit("refresh_pending_count");
+        // 👆👆👆
         res.status(200).json({ success: true, message: "Đã xóa địa điểm thành công." });
     } catch (error) {
         console.error("Delete error:", error);

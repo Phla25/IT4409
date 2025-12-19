@@ -31,7 +31,7 @@ class Location {
         u.username as created_by_username
       FROM locations l
       LEFT JOIN users u ON l.created_by_user_id = u.id
-      ORDER BY l.is_approved ASC, l.id ASC;
+      ORDER BY l.is_approved ASC;
     `;
     const result = await db.query(sql);
     return result.rows;
