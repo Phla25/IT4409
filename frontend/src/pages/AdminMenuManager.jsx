@@ -34,96 +34,227 @@ const AdminMenuManager = () => {
 };
 
 // ==========================================
-// COMPONENT 1: QUẢN LÝ KHO MÓN (HỆ THỐNG)
+// COMPONENT 1: QUẢN LÝ KHO MÓN (HỆ THỐNG) - [ĐÃ NÂNG CẤP]
 // ==========================================
 const BaseDishPanel = () => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  // State dữ liệu danh sách
+  const [dishes, setDishes] = useState([]); 
+  const [filteredDishes, setFilteredDishes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // State cho Form
+  const [formData, setFormData] = useState({ id: null, name: '', description: '' });
+  const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState({ type: '', msg: '' });
 
-  const handleCreateBaseDish = async (e) => {
+  // 1. Load danh sách món từ Server
+  const fetchDishes = async () => {
+    try {
+      // Gọi API lấy toàn bộ món (Bạn cần đảm bảo Backend đã có API này như hướng dẫn trước)
+      const res = await API.get('/base-dishes');
+      const data = res.data.data || [];
+      setDishes(data);
+      setFilteredDishes(data);
+    } catch (err) {
+      console.error("Lỗi load món:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDishes();
+  }, []);
+
+  // 2. Xử lý tìm kiếm (Filter Client-side)
+  useEffect(() => {
+    const lowerTerm = searchTerm.toLowerCase();
+    const results = dishes.filter(d => 
+        d.name.toLowerCase().includes(lowerTerm) || 
+        (d.description && d.description.toLowerCase().includes(lowerTerm))
+    );
+    setFilteredDishes(results);
+  }, [searchTerm, dishes]);
+
+  // 3. Xử lý Submit (Tạo mới hoặc Cập nhật)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!formData.name.trim()) return;
 
     try {
-      await API.post('/base-dishes', { name, description });
-      setStatus({ type: 'success', msg: `✅ Đã thêm món "${name}" vào hệ thống!` });
-      setName('');
-      setDescription('');
+      if (isEditing) {
+        // --- CẬP NHẬT ---
+        await API.put(`/base-dishes/${formData.id}`, { 
+            name: formData.name, 
+            description: formData.description 
+        });
+        setStatus({ type: 'success', msg: `✅ Đã cập nhật món "${formData.name}"` });
+      } else {
+        // --- TẠO MỚI ---
+        await API.post('/base-dishes', { 
+            name: formData.name, 
+            description: formData.description 
+        });
+        setStatus({ type: 'success', msg: `✅ Đã thêm mới món "${formData.name}"` });
+      }
+      
+      // Reset form và reload list
+      handleCancelEdit();
+      fetchDishes();
+
     } catch (err) {
       setStatus({ type: 'error', msg: `❌ Lỗi: ${err.response?.data?.message || err.message}` });
     }
   };
 
+  // 4. Chế độ Sửa: Đổ dữ liệu vào form
+  const handleEditClick = (dish) => {
+    setFormData({ id: dish.id, name: dish.name, description: dish.description || '' });
+    setIsEditing(true);
+    setStatus({ type: '', msg: '' });
+    // Cuộn lên đầu (nếu ở mobile)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 5. Hủy sửa
+  const handleCancelEdit = () => {
+    setFormData({ id: null, name: '', description: '' });
+    setIsEditing(false);
+    setStatus({ type: '', msg: '' });
+  };
+
   return (
-    <div className="panel" style={{ maxWidth: '600px' }}>
-      <h3>Thêm Món Mới Vào Hệ Thống</h3>
-      <p style={{ color: '#666', marginBottom: '20px' }}>
-        Đây là các món ăn gốc (VD: Phở Bò, Trà Chanh...). Sau khi tạo ở đây, bạn có thể gán nó vào menu của bất kỳ quán nào.
-      </p>
+    <div className="menu-manager-grid">
+      
+      {/* --- CỘT TRÁI: FORM NHẬP/SỬA --- */}
+      <div className="panel" style={{ height: 'fit-content' }}>
+        <h3 style={{ borderBottom: isEditing ? '2px solid #f39c12' : '2px solid #27ae60', paddingBottom: 10, marginTop: 0 }}>
+            {isEditing ? '✏️ Chỉnh Sửa Món Ăn' : '✨ Thêm Món Mới'}
+        </h3>
+        
+        {/* Thông báo trạng thái */}
+        {status.msg && (
+            <div style={{ 
+                padding: '10px', marginBottom: '15px', borderRadius: '5px',
+                background: status.type === 'success' ? '#d4edda' : '#f8d7da',
+                color: status.type === 'success' ? '#155724' : '#721c24'
+            }}>
+                {status.msg}
+            </div>
+        )}
 
-      {status.msg && (
-        <div style={{ 
-            padding: '10px', 
-            marginBottom: '15px', 
-            borderRadius: '5px',
-            background: status.type === 'success' ? '#d4edda' : '#f8d7da',
-            color: status.type === 'success' ? '#155724' : '#721c24'
-        }}>
-          {status.msg}
-        </div>
-      )}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Tên món ăn (Chung):</label>
+            <input 
+              type="text" 
+              placeholder="VD: Bún Đậu Mắm Tôm" 
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Mô tả mặc định:</label>
+            <textarea 
+              rows="4"
+              placeholder="Mô tả nguyên liệu, hương vị..." 
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+          
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="submit" className="btn-submit" 
+                    style={{ background: isEditing ? '#f39c12' : '#27ae60', flex: 1 }}>
+                {isEditing ? 'Lưu Thay Đổi' : 'Lưu vào Kho'}
+            </button>
+            
+            {isEditing && (
+                <button type="button" onClick={handleCancelEdit} 
+                        style={{ background: '#95a5a6', color: 'white', border: 'none', borderRadius: 6, padding: '10px 15px', cursor: 'pointer' }}>
+                    Hủy
+                </button>
+            )}
+          </div>
+        </form>
+      </div>
 
-      <form onSubmit={handleCreateBaseDish}>
-        <div className="form-group">
-          <label>Tên món ăn (Chung):</label>
-          <input 
-            type="text" 
-            placeholder="VD: Bún Đậu Mắm Tôm" 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+      {/* --- CỘT PHẢI: DANH SÁCH MÓN --- */}
+      <div className="panel">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <h3 style={{margin: 0}}>📋 Kho Món ({filteredDishes.length})</h3>
         </div>
-        <div className="form-group">
-          <label>Mô tả mặc định:</label>
-          <textarea 
-            rows="3"
-            placeholder="Mô tả ngắn về món ăn này..." 
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+
+        {/* Thanh tìm kiếm */}
+        <div className="form-group" style={{marginBottom: '15px'}}>
+            <input 
+                type="text" 
+                placeholder="🔍 Tìm kiếm món ăn trong kho..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: '20px' }}
+            />
         </div>
-        <button type="submit" className="btn-submit">Lưu vào Kho</button>
-      </form>
+
+        {/* Danh sách cuộn */}
+        <div style={{ maxHeight: '500px', overflowY: 'auto', paddingRight: '5px' }}>
+            {filteredDishes.length === 0 ? (
+                <p style={{ color: '#777', fontStyle: 'italic', textAlign: 'center' }}>
+                    {dishes.length === 0 ? "Kho đang trống. Hãy thêm món mới!" : "Không tìm thấy kết quả."}
+                </p>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {filteredDishes.map(dish => (
+                        <div key={dish.id} 
+                             style={{ 
+                                 padding: '12px', border: '1px solid #eee', borderRadius: '8px', 
+                                 background: isEditing && formData.id === dish.id ? '#fff3cd' : 'white', // Highlight món đang sửa
+                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                 transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                             }}>
+                            <div style={{flex: 1, paddingRight: '10px'}}>
+                                <strong style={{ color: '#2c3e50', fontSize: '1.05rem', display: 'block' }}>{dish.name}</strong>
+                                <span style={{ fontSize: '0.85rem', color: '#7f8c8d' }}>
+                                    {dish.description ? dish.description : <i>Chưa có mô tả</i>}
+                                </span>
+                            </div>
+                            <button 
+                                onClick={() => handleEditClick(dish)}
+                                style={{ 
+                                    background: '#3498db', color: 'white', border: 'none', 
+                                    padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                ✏️ Sửa
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+      </div>
     </div>
   );
 };
 
 // ==========================================
-// COMPONENT 2: QUẢN LÝ MENU CỦA QUÁN
+// COMPONENT 2: QUẢN LÝ MENU CỦA QUÁN (GIỮ NGUYÊN)
 // ==========================================
 const LocationMenuPanel = () => {
-  // State chọn quán
   const [locations, setLocations] = useState([]);
   const [selectedLocationId, setSelectedLocationId] = useState('');
-  
-  // State hiển thị menu
   const [menuItems, setMenuItems] = useState([]);
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
 
-  // State form thêm món
+  // State form
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchResults, setSearchResults] = useState([]); // List món tìm được
-  const [selectedBaseDish, setSelectedBaseDish] = useState(null); // Món đã chọn để thêm
+  const [searchResults, setSearchResults] = useState([]); 
+  const [selectedBaseDish, setSelectedBaseDish] = useState(null); 
   const [price, setPrice] = useState('');
   const [customName, setCustomName] = useState('');
 
-  // 1. Load danh sách quán (Admin View)
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        // Gọi API lấy tất cả quán (Nếu chưa có API admin getAll, dùng tạm nearby bán kính lớn)
         const res = await API.get('/locations/nearby?lat=21&lng=105&radius=5000'); 
         setLocations(res.data.data || []);
       } catch (err) { console.error("Lỗi load quán:", err); }
@@ -131,7 +262,6 @@ const LocationMenuPanel = () => {
     fetchLocations();
   }, []);
 
-  // 2. Load Menu khi chọn quán
   useEffect(() => {
     if (!selectedLocationId) {
         setMenuItems([]);
@@ -148,59 +278,45 @@ const LocationMenuPanel = () => {
     fetchMenu();
   }, [selectedLocationId]);
 
-  // 3. Xử lý tìm kiếm món gốc (Base Dish)
   const handleSearchBaseDish = async (keyword) => {
     setSearchKeyword(keyword);
-    setSelectedBaseDish(null); // Reset nếu gõ lại
-
+    setSelectedBaseDish(null);
     if (keyword.length < 2) {
         setSearchResults([]);
         return;
     }
-
     try {
         const res = await API.get(`/base-dishes/search?keyword=${keyword}`);
         setSearchResults(res.data.data || []);
     } catch (err) { console.error(err); }
   };
 
-  // 4. Chọn một món từ gợi ý
   const handleSelectDish = (dish) => {
     setSelectedBaseDish(dish);
     setSearchKeyword(dish.name);
-    setCustomName(dish.name); // Mặc định tên riêng = tên gốc
-    setSearchResults([]); // Ẩn dropdown
+    setCustomName(dish.name); 
+    setSearchResults([]); 
   };
 
-  // 5. Submit thêm món vào Menu
   const handleAddToMenu = async (e) => {
     e.preventDefault();
     if (!selectedBaseDish || !selectedLocationId) return alert("Thiếu thông tin!");
-
     try {
         await API.post(`/locations/${selectedLocationId}/menu`, {
             base_dish_id: selectedBaseDish.id,
             custom_name: customName,
             price: parseFloat(price),
-            description: selectedBaseDish.description // Mặc định lấy mô tả gốc
+            description: selectedBaseDish.description 
         });
-
         alert("Thêm món thành công!");
-        // Reset form
-        setSearchKeyword('');
-        setSelectedBaseDish(null);
-        setPrice('');
-        
-        // Reload menu
+        setSearchKeyword(''); setSelectedBaseDish(null); setPrice('');
         const res = await API.get(`/locations/${selectedLocationId}/menu`);
         setMenuItems(res.data.data);
-
     } catch (err) {
         alert("Lỗi: " + (err.response?.data?.message || err.message));
     }
   };
 
-  // 6. Xóa món
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm("Bạn chắc chắn muốn xóa món này?")) return;
     try {
@@ -211,7 +327,6 @@ const LocationMenuPanel = () => {
 
   return (
     <div className="panel menu-manager-wrapper">
-      {/* 1. Select Quán */}
       <div className="form-group" style={{ background: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
         <label>🏠 Chọn địa điểm để quản lý thực đơn:</label>
         <select 
@@ -228,11 +343,8 @@ const LocationMenuPanel = () => {
 
       {selectedLocationId && (
         <div className="menu-manager-grid" style={{ marginTop: '20px' }}>
-            
-            {/* CỘT TRÁI: FORM THÊM MÓN */}
             <div className="add-menu-form" style={{ borderRight: '1px solid #eee', paddingRight: '20px' }}>
-                <h4 style={{ borderBottom: '2px solid #27ae60', paddingBottom: '10px' }}>➕ Thêm Món Vào Menu</h4>
-                
+                <h4 style={{ borderBottom: '2px solid #27ae60', paddingBottom: '10px', marginTop: 0 }}>➕ Thêm Món Vào Menu</h4>
                 <form onSubmit={handleAddToMenu}>
                     <div className="form-group search-wrapper">
                         <label>Tìm món (Từ kho hệ thống):</label>
@@ -243,7 +355,6 @@ const LocationMenuPanel = () => {
                             onChange={(e) => handleSearchBaseDish(e.target.value)}
                             required
                         />
-                        {/* Dropdown gợi ý */}
                         {searchResults.length > 0 && (
                             <div className="search-results-dropdown">
                                 {searchResults.map(dish => (
@@ -255,44 +366,25 @@ const LocationMenuPanel = () => {
                         )}
                         {selectedBaseDish && <small style={{color:'green'}}>✅ Đã chọn: {selectedBaseDish.name}</small>}
                     </div>
-
                     <div className="form-group">
                         <label>Tên hiển thị tại quán:</label>
-                        <input 
-                            type="text" 
-                            value={customName}
-                            onChange={(e) => setCustomName(e.target.value)}
-                        />
-                        <small style={{color:'#888'}}>Có thể đặt tên khác (VD: Phở Đặc Biệt)</small>
+                        <input type="text" value={customName} onChange={(e) => setCustomName(e.target.value)} />
                     </div>
-
                     <div className="form-group">
                         <label>Giá bán (VNĐ):</label>
-                        <input 
-                            type="number" 
-                            placeholder="VD: 45000"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            required
-                        />
+                        <input type="number" placeholder="VD: 45000" value={price} onChange={(e) => setPrice(e.target.value)} required />
                     </div>
-
-                    <button type="submit" className="btn-submit" disabled={!selectedBaseDish}>
-                        Lưu vào Menu
-                    </button>
+                    <button type="submit" className="btn-submit" disabled={!selectedBaseDish}>Lưu vào Menu</button>
                 </form>
             </div>
 
-            {/* CỘT PHẢI: DANH SÁCH MÓN HIỆN TẠI */}
             <div className="current-menu-display">
-                <h4 style={{ borderBottom: '2px solid #3498db', paddingBottom: '10px' }}>
+                <h4 style={{ borderBottom: '2px solid #3498db', paddingBottom: '10px', marginTop: 0 }}>
                     📜 Thực Đơn Hiện Tại ({menuItems.length} món)
                 </h4>
-                
                 {isLoadingMenu ? <p>Đang tải menu...</p> : (
                     <div className="current-menu-list">
                         {menuItems.length === 0 && <p style={{fontStyle:'italic', color:'#888'}}>Quán chưa có món nào.</p>}
-                        
                         {menuItems.map(item => (
                             <div key={item.id} className="menu-card">
                                 <div>
@@ -300,9 +392,7 @@ const LocationMenuPanel = () => {
                                     <div className="price">{Number(item.price).toLocaleString()}đ</div>
                                     <div className="desc">{item.description}</div>
                                 </div>
-                                <button className="btn-delete" onClick={() => handleDeleteItem(item.id)}>
-                                    Xóa món
-                                </button>
+                                <button className="btn-delete" onClick={() => handleDeleteItem(item.id)}>Xóa món</button>
                             </div>
                         ))}
                     </div>

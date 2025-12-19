@@ -28,6 +28,13 @@ app.use('/api/auth', authRoutes);
 // ✨ [QUAN TRỌNG] Đăng ký route cho Review
 require('./routes/review.routes')(app);
 
+// 👇👇👇 THÊM DÒNG NÀY ĐỂ KÍCH HOẠT API MENU & BASE-DISHES 👇👇👇
+try {
+  require('./routes/menu.routes')(app);
+} catch (error) {
+  console.warn("⚠️ Chưa có file menu.routes.js hoặc lỗi cú pháp:", error.message);
+}
+
 // --- ERROR HANDLER ---
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err.stack);

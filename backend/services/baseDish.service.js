@@ -13,8 +13,8 @@ class BaseDishService {
     if (checkRes.rows.length > 0) throw new Error("Món này đã có trong hệ thống");
 
     const sql = `
-      INSERT INTO basedishes (name, description, created_at, updated_at)
-      VALUES ($1, $2, NOW(), NOW())
+      INSERT INTO basedishes (name, description, created_at)
+      VALUES ($1, $2, NOW())
       RETURNING *;
     `;
     const result = await db.query(sql, [name.trim(), description]);

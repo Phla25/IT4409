@@ -24,9 +24,9 @@ class MenuService {
     const sql = `
       INSERT INTO menuitems (
         location_id, base_dish_id, custom_name, price, description, 
-        is_available, created_at, updated_at
+        is_available, created_at
       )
-      VALUES ($1, $2, $3, $4, $5, TRUE, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, TRUE, NOW())
       RETURNING *;
     `;
     
@@ -65,7 +65,7 @@ class MenuService {
 
     const sql = `
       UPDATE menuitems 
-      SET ${fields.join(', ')}, updated_at = NOW()
+      SET ${fields.join(', ')}
       WHERE id = $${idx}
       RETURNING *;
     `;

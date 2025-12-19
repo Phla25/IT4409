@@ -200,3 +200,13 @@ exports.searchLocations = async (req, res) => {
     return res.status(500).json({ message: "Lỗi khi tìm kiếm địa điểm" });
   }
 };
+// [ADMIN] Lấy số lượng chờ duyệt (Cho Badge Notification)
+exports.getPendingCount = async (req, res) => {
+  try {
+    const count = await Location.countPending();
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    console.error("Count pending error:", error);
+    res.status(500).json({ message: "Lỗi đếm số lượng." });
+  }
+};

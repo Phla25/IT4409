@@ -58,6 +58,12 @@ class Location {
     const result = await db.query(sql, [userLat, userLng, radiusMiles]);
     return result.rows;
   }
+  // [NEW] Đếm số lượng địa điểm chờ duyệt
+  static async countPending() {
+    const sql = `SELECT COUNT(*) as count FROM locations WHERE is_approved = FALSE`;
+    const result = await db.query(sql);
+    return parseInt(result.rows[0].count);
+  }
 
   // [CRUD] CREATE
   static async create({ name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id, is_approved}) {

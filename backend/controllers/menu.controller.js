@@ -1,6 +1,6 @@
 const menuService = require('../services/menu.service');
 const baseDishService = require('../services/baseDish.service'); // 👇 Import mới
-
+const db = require('../config/db.config');
 // --- BASE DISH (Món ăn hệ thống) ---
 
 exports.createBaseDish = async (req, res) => {
@@ -62,4 +62,42 @@ exports.deleteMenuItem = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Lỗi xóa món" });
   }
+};
+// ✨ [MỚI] Lấy toàn bộ danh sách món gốc (Mới nhất lên đầu)
+exports.getAllBaseDishes = async (req, res) => {
+    try {
+        const sql = "SELECT * FROM basedishes ORDER BY id DESC";
+        const result = await db.query(sql);
+        res.status(200).json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error("Get All BaseDish Error:", error);
+        res.status(500).json({ message: "Lỗi lấy danh sách món." });
+    }
+};
+
+// ✨ [MỚI] Cập nhật thông tin món gốc (Tên, Mô tả)
+exports.updateBaseDish = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description } = req.body;
+
+        if (!name) return res.status(400).json({ message: "Tên món không được để trống" });
+
+        const sql = `
+            UPDATE basedishes 
+            SET name = $1, description = $2 
+            WHERE id = $3 
+            RETURNING *
+        `;
+        const result = await db.query(sql, [name, description, id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Không tìm thấy món để sửa." });
+        }
+
+        res.status(200).json({ success: true, message: "Cập nhật thành công!", data: result.rows[0] });
+    } catch (error) {
+        console.error("Update BaseDish Error:", error);
+        res.status(500).json({ message: "Lỗi server khi cập nhật." });
+    }
 };

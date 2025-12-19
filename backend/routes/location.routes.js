@@ -39,6 +39,12 @@ router.post(
   locationController.batchCreateLocations
 );
 
+router.get(
+  '/admin/pending-count', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.getPendingCount
+);
+
 // --- 2. CÁC ROUTE ĐỘNG (DYNAMIC ROUTES) ---
 // (Các route có tham số :id phải đặt xuống cuối cùng)
 
