@@ -278,4 +278,22 @@ exports.getDishRecommendations = async (req, res) => {
     `;
 
     // Chuyển mảng keyword thành dạng params cho ANY: ['%Pho%', '%Bun cha%', ...]
-    const params = [categoryKeywords.map(kw => `%${kw
+    const params = [categoryKeywords.map(kw => `%${kw}%`)];
+    
+    const result = await db.query(sql, params);
+
+    res.json({
+      success: true,
+      weather: {
+        temp: weather?.temperature,
+        condition_code: weather?.weathercode,
+        keywords: categoryKeywords
+      },
+      data: result.rows
+    });
+
+  } catch (error) {
+    console.error("Dish Recommendation Error:", error);
+    res.status(500).json({ message: "Lỗi khi lấy gợi ý món ăn." });
+  }
+};
