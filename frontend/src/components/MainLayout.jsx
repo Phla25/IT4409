@@ -17,7 +17,7 @@ export default function MainLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const SERVER_URL = process.env.BACK_END_API_URL || 'http://localhost:5000';
+  const SERVER_URL = process.env.REACT_APP_BACK_END_API_URL;
   // 1. Hàm lấy số lượng pending (để dùng lại nhiều lần)
   const fetchPendingCount = async () => {
     if (userRole === 'admin') {
