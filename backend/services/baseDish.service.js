@@ -37,6 +37,7 @@ class BaseDishService {
     const result = await db.query(sql);
     return result.rows.map(row => new BaseDish(row));
   }
+  
 }
 
 module.exports = new BaseDishService();
