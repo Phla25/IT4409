@@ -1,5 +1,5 @@
 const Location = require('../models/location.model');
-// 👇 Import thêm WeatherService và DB
+// 👇 Import thêm WeatherService và DB để dùng cho tính năng gợi ý
 const WeatherService = require('../services/weather.service');
 const db = require('../config/db.config');
 
@@ -121,16 +121,19 @@ exports.createLocation = async (req, res) => {
 
         const newLocation = await Location.create(newLocationData);
         
-        // Socket Logic
+        // 👇👇👇 SOCKET LOGIC BẮT ĐẦU TỪ ĐÂY 👇👇👇
         if (!isAutoApproved) {
-            const io = req.app.get("socketio");
+            const io = req.app.get("socketio"); // Lấy biến io đã set ở server.js
             if (io) {
+                // Gửi sự kiện 'new_proposal' tới tất cả người trong phòng 'admin_room'
                 io.to("admin_room").emit("new_proposal", {
                     message: `📢 Có địa điểm mới chờ duyệt: ${newLocationData.name}`,
                     data: newLocation
                 });
+                console.log("Socket sent: new_proposal");
             }
         }
+        // 👆👆👆 KẾT THÚC SOCKET LOGIC 👆👆👆
 
         res.status(201).json({ 
             success: true, 
@@ -152,10 +155,12 @@ exports.updateLocation = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy địa điểm để cập nhật." });
         }
         
+        // 👇👇👇 THÊM SOCKET: Báo cho Admin cập nhật lại số lượng 👇👇👇
         const io = req.app.get("socketio");
         if (io) {
             io.to("admin_room").emit("refresh_pending_count"); 
         }
+        // 👆👆👆
         
         res.status(200).json({ success: true, message: "Cập nhật thành công.", data: updatedLocation });
     } catch (error) {
@@ -170,10 +175,12 @@ exports.deleteLocation = async (req, res) => {
         const deleted = await Location.delete(req.params.id);
         if (!deleted) return res.status(404).json({ message: "Không tìm thấy địa điểm để xóa." });
         
+        // 👇👇👇 THÊM SOCKET: Xóa xong cũng phải cập nhật lại số 👇👇👇
         const io = req.app.get("socketio");
         if (io) {
             io.to("admin_room").emit("refresh_pending_count");
         }
+        // 👆👆👆
         
         res.status(200).json({ success: true, message: "Đã xóa địa điểm thành công." });
     } catch (error) {
@@ -271,22 +278,4 @@ exports.getDishRecommendations = async (req, res) => {
     `;
 
     // Chuyển mảng keyword thành dạng params cho ANY: ['%Pho%', '%Bun cha%', ...]
-    const params = [categoryKeywords.map(kw => `%${kw}%`)];
-    
-    const result = await db.query(sql, params);
-
-    res.json({
-      success: true,
-      weather: {
-        temp: weather?.temperature,
-        condition_code: weather?.weathercode,
-        keywords: categoryKeywords
-      },
-      data: result.rows
-    });
-
-  } catch (error) {
-    console.error("Dish Recommendation Error:", error);
-    res.status(500).json({ message: "Lỗi khi lấy gợi ý món ăn." });
-  }
-};
+    const params = [categoryKeywords.map(kw => `%${kw
