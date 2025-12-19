@@ -1,5 +1,5 @@
 const Location = require('../models/location.model');
-// 👇 Import thêm WeatherService và DB để dùng cho tính năng gợi ý
+// 👇 Import thêm WeatherService và DB
 const WeatherService = require('../services/weather.service');
 const db = require('../config/db.config');
 
@@ -245,34 +245,36 @@ exports.getDishRecommendations = async (req, res) => {
     const categoryKeywords = WeatherService.getCategoryKeywords(weather);
 
     // 3. Query Database phức hợp để tìm món ăn
-    // Tìm món ăn mà (Category của Món đó OR Category của Quán đó) trùng với từ khóa
+    // ✅ FIX LỖI: Dùng Subquery để tránh lỗi DISTINCT + ORDER BY RANDOM()
     const sql = `
-      SELECT DISTINCT
-        m.id, 
-        COALESCE(m.custom_name, bd.name) as dish_name, 
-        m.price, 
-        (SELECT image_url FROM menuitemimages WHERE menu_item_id = m.id LIMIT 1) as dish_image,
-        l.id as location_id, 
-        l.name as restaurant_name, 
-        l.address
-      FROM menuitems m
-      JOIN locations l ON m.location_id = l.id
-      JOIN basedishes bd ON m.base_dish_id = bd.id
-      
-      -- Join để check Category của Món ăn (Base Dish)
-      LEFT JOIN basedishcategories bdc ON bd.id = bdc.base_dish_id
-      LEFT JOIN categories c_dish ON bdc.category_id = c_dish.id
-      
-      -- Join để check Category của Quán (Location)
-      LEFT JOIN locationcategories lc ON l.id = lc.location_id
-      LEFT JOIN categories c_loc ON lc.category_id = c_loc.id
+      SELECT * FROM (
+        SELECT DISTINCT
+          m.id, 
+          COALESCE(m.custom_name, bd.name) as dish_name, 
+          m.price, 
+          (SELECT image_url FROM menuitemimages WHERE menu_item_id = m.id LIMIT 1) as dish_image,
+          l.id as location_id, 
+          l.name as restaurant_name, 
+          l.address
+        FROM menuitems m
+        JOIN locations l ON m.location_id = l.id
+        JOIN basedishes bd ON m.base_dish_id = bd.id
+        
+        -- Join để check Category của Món ăn (Base Dish)
+        LEFT JOIN basedishcategories bdc ON bd.id = bdc.base_dish_id
+        LEFT JOIN categories c_dish ON bdc.category_id = c_dish.id
+        
+        -- Join để check Category của Quán (Location)
+        LEFT JOIN locationcategories lc ON l.id = lc.location_id
+        LEFT JOIN categories c_loc ON lc.category_id = c_loc.id
 
-      WHERE l.is_approved = true
-      AND (
-        c_dish.name ILIKE ANY($1) 
-        OR 
-        c_loc.name ILIKE ANY($1)
-      )
+        WHERE l.is_approved = true
+        AND (
+          c_dish.name ILIKE ANY($1) 
+          OR 
+          c_loc.name ILIKE ANY($1)
+        )
+      ) AS distinct_dishes
       ORDER BY RANDOM()
       LIMIT 8
     `;
