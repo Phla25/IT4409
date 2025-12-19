@@ -109,3 +109,97 @@ CREATE TABLE Notifications (
 );
 
 CREATE INDEX idx_notifications_user_unread ON Notifications(user_id, is_read);
+-- ---------------------------------------------------------
+-- 1. CẬP NHẬT CATEGORIES
+-- ---------------------------------------------------------
+-- Xóa constraint cũ (nếu có) để tránh lỗi trùng
+ALTER TABLE Categories DROP CONSTRAINT IF EXISTS categories_type_check;
+
+-- Thêm constraint mới
+ALTER TABLE Categories 
+ADD CONSTRAINT categories_type_check 
+CHECK (type IN ('food_type', 'venue_type', 'feature', 'dish_type', 'dietary'));
+
+
+-- ---------------------------------------------------------
+-- 2. TẠO CÁC BẢNG MỚI (BaseDishes, MenuItems, Categories Link)
+-- ---------------------------------------------------------
+-- Bảng món ăn chung
+CREATE TABLE IF NOT EXISTS BaseDishes (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng thực đơn tại quán
+CREATE TABLE IF NOT EXISTS MenuItems (
+    id SERIAL PRIMARY KEY,
+    location_id INTEGER REFERENCES Locations(id) ON DELETE CASCADE NOT NULL,
+    base_dish_id INTEGER REFERENCES BaseDishes(id) ON DELETE CASCADE NOT NULL,
+    custom_name VARCHAR(100),
+    price INTEGER,
+    description TEXT,
+    is_available BOOLEAN DEFAULT TRUE,
+    average_rating NUMERIC(3, 2) DEFAULT 0.0,
+    review_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (location_id, base_dish_id)
+);
+
+-- Bảng tag cho món ăn
+CREATE TABLE IF NOT EXISTS BaseDishCategories (
+    base_dish_id INTEGER REFERENCES BaseDishes(id) ON DELETE CASCADE,
+    category_id INTEGER REFERENCES Categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (base_dish_id, category_id)
+);
+
+
+-- ---------------------------------------------------------
+-- 3. CẬP NHẬT CẤU TRÚC ẢNH
+-- ---------------------------------------------------------
+-- Cập nhật bảng ảnh Location (chỉ thêm nếu chưa có)
+ALTER TABLE LocationImages 
+ADD COLUMN IF NOT EXISTS description VARCHAR(255),
+ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+-- Tạo bảng ảnh cho Menu Item
+CREATE TABLE IF NOT EXISTS MenuItemImages (
+    id SERIAL PRIMARY KEY,
+    menu_item_id INTEGER REFERENCES MenuItems(id) ON DELETE CASCADE NOT NULL,
+    image_url TEXT NOT NULL,
+    is_main BOOLEAN DEFAULT FALSE,
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ---------------------------------------------------------
+-- 4. CẬP NHẬT BẢNG REVIEWS (Phần quan trọng)
+-- ---------------------------------------------------------
+-- Thêm cột liên kết mới (chỉ thêm nếu chưa có)
+ALTER TABLE Reviews 
+ADD COLUMN IF NOT EXISTS menu_item_id INTEGER REFERENCES MenuItems(id) ON DELETE CASCADE,
+ADD COLUMN IF NOT EXISTS images JSONB;
+
+-- Cho phép dish_id cũ được phép NULL (để chuẩn bị xóa)
+ALTER TABLE Reviews ALTER COLUMN dish_id DROP NOT NULL;
+
+-- Cập nhật logic ràng buộc (Xóa cái cũ đi trước rồi tạo lại cho chắc chắn)
+ALTER TABLE Reviews DROP CONSTRAINT IF EXISTS check_review_target;
+
+ALTER TABLE Reviews 
+ADD CONSTRAINT check_review_target 
+CHECK (location_id IS NOT NULL OR menu_item_id IS NOT NULL);
+
+
+-- ---------------------------------------------------------
+-- 5. DỌN DẸP BẢNG CŨ (Dishes)
+-- ---------------------------------------------------------
+-- Xóa khóa ngoại từ Reviews trỏ về Dishes cũ
+ALTER TABLE Reviews DROP CONSTRAINT IF EXISTS reviews_dish_id_fkey;
+
+-- Xóa cột dish_id cũ khỏi bảng Reviews
+ALTER TABLE Reviews DROP COLUMN IF EXISTS dish_id;
+
+-- Cuối cùng: Xóa bảng Dishes cũ
+DROP TABLE IF EXISTS Dishes;
