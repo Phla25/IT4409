@@ -15,6 +15,9 @@ import FavoriteLocationsPage from './pages/FavoriteLocationsPage';
 import AdminMenuManager from './pages/AdminMenuManager';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+// 👇 Import Page Gợi ý Món ăn (Mới)
+import DishRecommendationPage from './pages/DishRecommendationPage';
+
 // --- TRANG BÁO LỖI QUYỀN (Component nhỏ nội bộ) ---
 function UnauthorizedPage() {
   return (
@@ -39,7 +42,14 @@ function AppRoutes() {
       <Route path="/" element={<MainLayout />}>
         {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
+<<<<<<< HEAD
         
+=======
+
+        {/* 👇 Thêm Route cho trang Gợi ý món ăn */}
+        <Route path="recommendations" element={<DishRecommendationPage />} />
+
+>>>>>>> remote_branch
         {/* Route cho trang danh sách địa điểm gần đây */}
         <Route path="nearby" element={<LocationListPage />} />
         {/* Route cho trang danh sách địa điểm yêu thích */}

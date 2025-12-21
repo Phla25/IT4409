@@ -11,6 +11,7 @@ const authMiddleware = require('../middlewares/auth.middleware');
 router.get('/', locationController.getAllLocations);
 router.get('/nearby', locationController.getNearbyLocations);
 router.get('/search', locationController.searchLocations);
+router.get('/recommendations/dishes', locationController.getDishRecommendations);
 
 // Admin-only routes (PHẢI ĐẶT TRƯỚC /:id)
 router.get(
