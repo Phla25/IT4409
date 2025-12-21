@@ -2,10 +2,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MapContainer as LeafletMapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import API from './api'; 
-// 👇 Thay useGeolocation bằng useLocationContext
+// 👇 Thay useGeolocation bằng useLocationContext để đồng bộ vị trí
 import { useLocationContext } from './context/LocationContext'; 
+// 👇 Import useTheme để đổi màu bản đồ
+import { useTheme } from './context/ThemeContext';
 import SimulationController from './components/SimulationController';
 import { useAuth } from './context/AuthContext';
+import { calculateDistance } from './utils/distance'; // Import hàm calculateDistance
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -41,6 +44,7 @@ const tempMarkerIcon = new L.Icon({
 });
 
 const hanoiPosition = [21.028511, 105.854199];
+const FIXED_RADIUS_KM = 2; // Khai báo hằng số bán kính cố định nếu dùng cho filter mặc định
 
 // --- COMPONENT HELPER (Giữ nguyên) ---
 const FitBoundsToRoute = ({ route }) => {
@@ -55,11 +59,24 @@ const FitBoundsToRoute = ({ route }) => {
 
 const ChangeView = ({ center, zoom }) => {
   const map = useMap();
+  
   useEffect(() => {
-    if (center) {
-      map.setView(center, zoom, { animate: true, duration: 1 });
-    }
-  }, [center, zoom, map]);
+    if (!map || !center) return;
+
+    const rafId = requestAnimationFrame(() => {
+      if (map.getContainer()) {
+        try {
+          // Tắt animation để tránh lỗi crash khi unmount
+          map.setView(center, zoom, { animate: false });
+        } catch (e) {
+          console.warn("Map update ignored:", e);
+        }
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [map, center, zoom]);
+
   return null;
 };
 
@@ -79,6 +96,9 @@ const MapContainer = () => {
   const isAdmin = userRole === 'admin';
   const navigate = useNavigate();
   
+  // 👇 Lấy theme từ Context
+  const { theme } = useTheme();
+
   const [locations, setLocations] = useState([]);
   const [isAdminMode, setIsAdminMode] = useState(false); 
   const [radius, setRadius] = useState(5); 
@@ -90,7 +110,6 @@ const MapContainer = () => {
   const [isFetchingRoute, setIsFetchingRoute] = useState(false); 
 
   // 👇 SỬ DỤNG CONTEXT: Lấy vị trí và hàm cập nhật giả lập từ Global State
-  // Lưu ý: userLocation ở đây đã được xử lý trong Context (nếu có giả lập thì lấy giả lập, không thì lấy thật)
   const { location: userLocation, setSimulatedLocation } = useLocationContext();
 
   const [isAddingMode, setIsAddingMode] = useState(false); 
@@ -101,11 +120,9 @@ const MapContainer = () => {
 
   // Logic xác định vị trí để hiển thị trên bản đồ
   const effectiveUserLocation = useMemo(() => {
-    // Nếu Admin đang ở chế độ xem Admin -> Không cần quan tâm vị trí User
     if (isAdminMode) {
       return { loaded: false, coordinates: { lat: null, lng: null }, error: null };
     }
-    // Ngược lại, trả về vị trí từ Context (đã bao gồm logic thật/giả lập)
     return userLocation; 
   }, [userLocation, isAdminMode]);
 
@@ -263,6 +280,18 @@ const MapContainer = () => {
       setTempMarker(null);
       fetchLocations(); 
   };
+  
+  const getDistanceToUser = (loc) => {
+    if (!effectiveUserLocation.loaded || !effectiveUserLocation.coordinates || !effectiveUserLocation.coordinates.lat) return null;
+    if (!loc || !loc.latitude || !loc.longitude) return null;
+
+    return calculateDistance(
+      effectiveUserLocation.coordinates.lat,
+      effectiveUserLocation.coordinates.lng,
+      parseFloat(loc.latitude),
+      parseFloat(loc.longitude)
+    );
+  };
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
@@ -348,7 +377,13 @@ const MapContainer = () => {
 
       {/* MAP */}
       <LeafletMapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
-        <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
+        
+        {/* ✨ VẪN DÙNG GOOGLE MAPS, NHƯNG THÊM CLASS ĐỂ ĐỔI MÀU ✨ */}
+        <TileLayer 
+          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          attribution="Google Maps"
+          className={theme === 'dark' ? 'google-map-dark' : ''}
+        />
 
         <ChangeView center={mapCenter} zoom={mapZoom} />
         <FitBoundsToRoute route={route} />
@@ -392,7 +427,7 @@ const MapContainer = () => {
 
         {locations.map(loc => (
           <Marker key={loc.id} position={[loc.latitude, loc.longitude]}> 
-            <Popup> 
+            <Popup maxWidth={300} minWidth={200}> 
               <div className="location-popup-content">
                 <h4 className="popup-title">{loc.name}</h4>
                 <div className="popup-info-line"><span>📍</span><span>{loc.address}</span></div>

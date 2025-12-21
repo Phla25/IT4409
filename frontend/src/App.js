@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -63,7 +63,8 @@ function AppRoutes() {
           path="admin" 
           element={
             <ProtectedRoute requiredRole="admin">
-               <div style={{ padding: '20px', overflowY: 'auto', height: '100%', width: '100%' }}>
+               {/* ✨ FIX: Xóa padding: '20px' để giao diện phủ kín màn hình, không bị lộ viền trắng */}
+               <div style={{ overflowY: 'auto', height: '100%', width: '100%' }}>
                   {/* Render bảng quản lý */}
                   <LocationCRUD />
                </div>

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✨ THÊM DÒNG NÀY
-import API from '../api'; // Dùng instance đã cấu hình interceptor
+import { useNavigate } from 'react-router-dom';
+import API from '../api';
 import * as XLSX from 'xlsx';
-import './LocationCRUD.css'; // Nhớ đảm bảo file CSS này đã được tạo như bước trước
+import './LocationCRUD.css';
 
 export default function LocationCRUD() {
   // --- STATE QUẢN LÝ DỮ LIỆU ---
   const [locations, setLocations] = useState([]);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [refresh, setRefresh] = useState(0); // Biến trigger reload
+  const [refresh, setRefresh] = useState(0); 
   const [view, setView] = useState('list'); // 'list' hoặc 'form'
 
   // --- STATE FORM ---
@@ -31,17 +31,14 @@ export default function LocationCRUD() {
   // --- STATE TÌM KIẾM, LỌC, SẮP XẾP & PHÂN TRANG ---
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' }); // ✨ Sắp xếp mặc định theo ID
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' }); 
   const itemsPerPage = 10;
 
-  // ============================================================
   // 1. FETCH DỮ LIỆU
-  // ============================================================
   useEffect(() => {
     const fetchLocations = async () => {
       setLoading(true);
       try {
-        // ✨ Sửa đổi: Thêm query param `status=all` để đảm bảo lấy tất cả địa điểm
         const res = await API.get('/locations/admin/all', {
           params: { status: 'all' }
         });
@@ -56,9 +53,7 @@ export default function LocationCRUD() {
     fetchLocations();
   }, [refresh]);
 
-  // ============================================================
-  // 2. XỬ LÝ FORM (THÊM / SỬA)
-  // ============================================================
+  // 2. XỬ LÝ FORM
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -71,7 +66,7 @@ export default function LocationCRUD() {
     setFormData({
       name: '', description: '', address: '', district: '',
       latitude: '', longitude: '', phone_number: '',
-      min_price: 0, max_price: 0, is_approved: true // Admin tạo thì mặc định duyệt luôn
+      min_price: 0, max_price: 0, is_approved: true
     });
     setIsEditing(false);
     setView('form');
@@ -95,14 +90,13 @@ export default function LocationCRUD() {
     setView('form');
   };
 
-  const  handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (isEditing) {
         await API.put(`/locations/${currentId}`, formData);
         alert("Cập nhật thành công!");
       } else {
-        // ✨ [FIX] Sửa lại API endpoint để khớp với backend route là '/propose'
         await API.post('/locations/propose', formData); 
         alert("Thêm mới thành công!");
       }
@@ -113,9 +107,7 @@ export default function LocationCRUD() {
     }
   };
 
-  // ============================================================
-  // 3. XỬ LÝ HÀNH ĐỘNG (DUYỆT / XÓA)
-  // ============================================================
+  // 3. XỬ LÝ HÀNH ĐỘNG
   const handleApprove = async (id) => {
     try {
       await API.put(`/locations/${id}`, { is_approved: true });
@@ -135,9 +127,7 @@ export default function LocationCRUD() {
     }
   };
 
-  // ============================================================
   // 4. XỬ LÝ EXCEL
-  // ============================================================
   const handleExcelUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -153,7 +143,6 @@ export default function LocationCRUD() {
         return;
       }
 
-      // Map dữ liệu từ Excel sang chuẩn DB
       const locationsData = sheet.map((row) => ({
         name: row['Tên địa điểm'],
         description: row['Mô tả'],
@@ -178,44 +167,31 @@ export default function LocationCRUD() {
     }
   };
 
-  // ============================================================
   // 5. LOGIC LỌC & PHÂN TRANG
-  // ============================================================
-
-  // ✨ Hàm xử lý khi click vào header để sắp xếp
   const requestSort = (key) => {
     let direction = 'ascending';
-    // Nếu click lại cột đang sắp xếp, đảo chiều
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
-    setCurrentPage(1); // Quay về trang 1 khi sắp xếp lại
+    setCurrentPage(1);
   };
 
-  // ✨ Dùng useMemo để tối ưu việc lọc và sắp xếp
   const processedLocations = useMemo(() => {
     let sortableItems = [...locations];
 
-    // 1. Lọc theo từ khóa tìm kiếm
     sortableItems = sortableItems.filter(loc => 
       loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       loc.address.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // 2. Sắp xếp
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
-        // Xử lý giá trị null hoặc undefined
         const valA = a[sortConfig.key] === null || a[sortConfig.key] === undefined ? '' : a[sortConfig.key];
         const valB = b[sortConfig.key] === null || b[sortConfig.key] === undefined ? '' : b[sortConfig.key];
 
-        if (valA < valB) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (valA > valB) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
+        if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
       });
     }
@@ -228,17 +204,10 @@ export default function LocationCRUD() {
     currentPage * itemsPerPage
   );
 
-  // ============================================================
-  // RENDER GIAO DIỆN
-  // ============================================================
-
-  // ✨ Helper để thêm class cho mũi tên sắp xếp
   const getSortIndicator = (name) => {
     if (!sortConfig || sortConfig.key !== name) return null;
-    if (sortConfig.direction === 'ascending') return ' ▲';
-    return ' ▼';
+    return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
   };
-
 
   // --- VIEW 1: FORM NHẬP LIỆU ---
   if (view === 'form') {
@@ -314,7 +283,6 @@ export default function LocationCRUD() {
       <div className="crud-header">
         <h3>📋 Quản lý Địa điểm ({locations.length})</h3>
         <div className="header-tools">
-            {/* Nút Excel ẩn */}
             <input id="excel-upload" type="file" hidden accept=".xlsx" onChange={handleExcelUpload} />
             <button className="btn-excel" onClick={() => document.getElementById('excel-upload').click()}>
                 📂 Import Excel
@@ -323,7 +291,6 @@ export default function LocationCRUD() {
         </div>
       </div>
 
-      {/* Thanh tìm kiếm */}
       <div className="crud-search-bar">
         <input 
             type="text" 
@@ -365,8 +332,8 @@ export default function LocationCRUD() {
                 <tr key={loc.id}>
                   <td>#{loc.id}</td>
                   <td>
-                      <div style={{fontWeight: 'bold', color: '#2c3e50'}}>{loc.name}</div>
-                      <small style={{color: '#7f8c8d'}}>{loc.district}</small>
+                      <div style={{fontWeight: 'bold', color: 'var(--text-color)'}}>{loc.name}</div>
+                      <small>{loc.district}</small>
                   </td>
                   <td>{loc.address}</td>
                   <td>
@@ -388,7 +355,6 @@ export default function LocationCRUD() {
                           ✅
                         </button>
                       )}
-                      {/* ✨ THÊM NÚT XEM CHI TIẾT */}
                       <button 
                         className="btn-icon view" 
                         onClick={() => navigate(`/locations/${loc.id}`)} 
@@ -410,7 +376,6 @@ export default function LocationCRUD() {
         </div>
       )}
 
-      {/* Phân trang */}
       {totalPages > 1 && (
         <div className="pagination-container">
             <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}>Trước</button>

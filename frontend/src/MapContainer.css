@@ -1,5 +1,7 @@
 /* src/MapContainer.css */
 
+/* ... (Giữ nguyên các style cũ cho contribute-controls, btn-contribute, v.v...) ... */
+
 /* Container chứa các nút điều khiển */
 .contribute-controls {
     position: absolute;
@@ -113,4 +115,75 @@
         font-size: 0.9rem;
         padding: 8px 15px;
     }
+}
+
+/* ========================================= */
+/* 🌙 DARK MODE SUPPORT CHO POPUP 🌙 */
+/* ========================================= */
+
+/* Ghi đè style của Leaflet Popup khi body có class .dark-mode */
+/* Sửa lỗi trùng màu: Đặt nền tối (#2a2d33) và chữ sáng (#f9fafb) rõ ràng */
+body.dark-mode .leaflet-popup-content-wrapper,
+body.dark-mode .leaflet-popup-tip {
+    background-color: #2a2d33 !important; /* Nền tối */
+    color: #f9fafb !important; /* Chữ sáng */
+    box-shadow: 0 3px 14px rgba(0,0,0,0.4) !important;
+}
+
+/* Đảm bảo các thẻ con bên trong cũng nhận màu chữ sáng */
+body.dark-mode .leaflet-popup-content,
+body.dark-mode .leaflet-popup-content * {
+    color: #f9fafb !important;
+}
+
+/* Riêng các thành phần cụ thể có thể chỉnh màu khác cho đẹp */
+body.dark-mode .leaflet-popup-content h3,
+body.dark-mode .leaflet-popup-content h4,
+body.dark-mode .popup-title {
+    color: #f9fafb !important; /* Tiêu đề trắng sáng */
+    border-bottom-color: #374151 !important;
+}
+
+body.dark-mode .leaflet-popup-content p,
+body.dark-mode .popup-info-line,
+body.dark-mode .popup-info-line span {
+    color: #cbd5e1 !important; /* Text phụ màu xám sáng hơn chút để phân biệt */
+}
+
+/* Icon trong popup - Đảo ngược màu để dễ nhìn trên nền tối */
+body.dark-mode .popup-icon {
+    filter: brightness(0.8) invert(1); 
+}
+
+/* Nút "Xem chi tiết" trong popup */
+body.dark-mode .popup-details-button {
+    background-color: #374151 !important; /* Nền nút tối hơn nền popup */
+    color: #60a5fa !important; /* Chữ xanh dương sáng */
+    border: 1px solid #4b5563 !important;
+}
+
+body.dark-mode .popup-details-button:hover {
+    background-color: #4b5563 !important;
+    color: #fff !important;
+}
+
+/* Nút chỉ đường */
+body.dark-mode .popup-directions-button {
+    filter: brightness(0.9);
+}
+
+/* ========================================= */
+/* 🌑 GOOGLE MAP DARK MODE HACK 🌑 */
+/* ========================================= */
+
+/* Đảo ngược màu sắc của bản đồ để tạo hiệu ứng Dark Mode. */
+.google-map-dark .leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
+}
+
+/* 🔥 FIX: Đảo ngược lại màu của Popup để nó KHÔNG bị ảnh hưởng bởi filter của bản đồ */
+/* Vì Popup nằm trong overlay pane của Leaflet, đôi khi nó bị dính filter nếu không xử lý kỹ */
+.google-map-dark .leaflet-pane.leaflet-popup-pane {
+    filter: invert(100%) hue-rotate(180deg) !important; 
+    /* Đảo ngược lại lần nữa để về màu chuẩn */
 }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-// Import thêm các icon cần thiết cho Menu và Edit
-import { FaHeart, FaRegHeart, FaUtensils, FaEdit, FaTimes } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaUtensils, FaTimes, FaMapMarkerAlt, FaStar, FaTrash } from 'react-icons/fa';
 import API from '../api';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet'; 
@@ -17,6 +16,30 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+// Hàm helper: Tạo màu gradient ngẫu nhiên dựa trên tên
+const getPlaceholderStyle = (name) => {
+  const gradients = [
+    'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Hồng
+    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', // Tím nhạt
+    'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', // Xanh mint
+    'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)', // Xanh tím
+    'linear-gradient(120deg, #f093fb 0%, #f5576c 100%)', // Đỏ hồng
+    'linear-gradient(120deg, #f6d365 0%, #fda085 100%)', // Cam vàng
+    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' // Tím đậm
+  ];
+  
+  let hash = 0;
+  if (name) {
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+  }
+  const index = Math.abs(hash) % gradients.length;
+  
+  return { background: gradients[index] };
+};
+
 const LocationDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -30,7 +53,7 @@ const LocationDetailPage = () => {
   const [location, setLocation] = useState(null);
   const [reviews, setReviews] = useState([]); 
   
-  // ✨ MỚI: State cho Menu Modal
+  // State cho Menu Modal
   const [showMenuModal, setShowMenuModal] = useState(false); 
   const [menuItems, setMenuItems] = useState([]); 
   const [loadingMenu, setLoadingMenu] = useState(false);
@@ -78,8 +101,8 @@ const LocationDetailPage = () => {
   useEffect(() => {
     if (user && id) {
       API.get(`/favorites/check?location_id=${id}`)
-         .then(res => setIsFavorited(res.data.isFavorited))
-         .catch(err => console.error(err));
+          .then(res => setIsFavorited(res.data.isFavorited))
+          .catch(err => console.error(err));
     }
   }, [user, id]);
 
@@ -201,6 +224,32 @@ const LocationDetailPage = () => {
               <strong>Trạng thái:</strong> <span className={`status-badge ${location.is_approved ? 'approved' : 'pending'}`}>{location.is_approved ? 'Đã duyệt' : 'Chờ duyệt'}</span>
             </p>
           )}
+
+          {/* ✨ MỤC HÌNH ẢNH (GALLERY) */}
+          {location.images && location.images.length > 0 && (
+            <div className="detail-gallery-section">
+                <h4>📷 Hình ảnh</h4>
+                <div className="image-gallery-container">
+                    {location.images.map((image, index) => (
+                        <div key={image.id || index} className="gallery-img-wrapper">
+                            <img 
+                                src={image.url} 
+                                alt={`${location.name} - ${index + 1}`} 
+                                className="gallery-image"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                            {/* Placeholder fallback cho gallery */}
+                            <div className="gallery-placeholder" style={{...getPlaceholderStyle(location.name), display: 'none'}}>
+                                {location.name.charAt(0).toUpperCase()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+          )}
         </div>
         
         <div className="detail-map-panel">
@@ -245,7 +294,27 @@ const LocationDetailPage = () => {
               <div className="review-header">
                 <div className="reviewer-info">
                   <div className="reviewer-avatar">
-                    {rev.authorAvatar ? <img src={rev.authorAvatar} alt="avatar" /> : rev.authorName.charAt(0).toUpperCase()}
+                    {/* Logic hiển thị Avatar: Ảnh -> Placeholder chữ cái */}
+                    {rev.authorAvatar ? (
+                        <>
+                            <img 
+                                src={rev.authorAvatar} 
+                                alt="avatar" 
+                                className="reviewer-avatar-img"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                            <div className="reviewer-placeholder" style={{...getPlaceholderStyle(rev.authorName), display: 'none'}}>
+                                {rev.authorName.charAt(0).toUpperCase()}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="reviewer-placeholder" style={getPlaceholderStyle(rev.authorName)}>
+                            {rev.authorName.charAt(0).toUpperCase()}
+                        </div>
+                    )}
                   </div>
                   <div>
                     <div className="reviewer-name">{rev.authorName}</div>
