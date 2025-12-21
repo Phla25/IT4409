@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { FaHeart, FaRegHeart, FaUtensils, FaTimes, FaMapMarkerAlt, FaStar, FaTrash } from 'react-icons/fa';
+// Thêm FaCamera cho nút upload
+import { FaHeart, FaRegHeart, FaUtensils, FaTimes, FaMapMarkerAlt, FaStar, FaTrash, FaCamera } from 'react-icons/fa';
 import API from '../api';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet'; 
@@ -58,6 +59,9 @@ const LocationDetailPage = () => {
   const [menuItems, setMenuItems] = useState([]); 
   const [loadingMenu, setLoadingMenu] = useState(false);
 
+  // State upload ảnh
+  const [uploadingImg, setUploadingImg] = useState(false);
+
   // Form State (Review)
   const [userRating, setUserRating] = useState(5);
   const [userComment, setUserComment] = useState('');
@@ -72,29 +76,27 @@ const LocationDetailPage = () => {
   const isAdmin = userRole === 'admin' && queryParams.get('view') !== 'user';
   const isUser = userRole === 'user' || queryParams.get('view') === 'user';
 
-  // --- FETCH DỮ LIỆU ---
+  // --- HÀM LOAD DỮ LIỆU ---
+  const fetchData = async () => {
+    try {
+      // 1. Lấy thông tin địa điểm
+      const locRes = await API.get(`/locations/${id}`);
+      setLocation(locRes.data.data);
+
+      // 2. Lấy danh sách đánh giá
+      const revRes = await API.get(`/reviews`, { params: { location_id: id } });
+      setReviews(revRes.data.data || []);
+    } catch (err) {
+      console.error("Lỗi tải dữ liệu:", err);
+      if (!location) setError("Không thể tải thông tin địa điểm.");
+    }
+  };
+
+  // --- FETCH DỮ LIỆU BAN ĐẦU ---
   useEffect(() => {
     if (!id) return;
-    
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // 1. Lấy thông tin địa điểm
-        const locRes = await API.get(`/locations/${id}`);
-        setLocation(locRes.data.data);
-
-        // 2. Lấy danh sách đánh giá
-        const revRes = await API.get(`/reviews`, { params: { location_id: id } });
-        setReviews(revRes.data.data || []);
-      } catch (err) {
-        console.error("Lỗi tải dữ liệu:", err);
-        if (!location) setError("Không thể tải thông tin địa điểm.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    setLoading(true);
+    fetchData().finally(() => setLoading(false));
   }, [id]);
 
   // --- KIỂM TRA YÊU THÍCH ---
@@ -109,7 +111,6 @@ const LocationDetailPage = () => {
   // --- XỬ LÝ MENU (THỰC ĐƠN) ---
   const handleOpenMenu = async () => {
     setShowMenuModal(true);
-    // Chỉ gọi API nếu chưa có dữ liệu menu
     if (menuItems.length === 0) {
         setLoadingMenu(true);
         try {
@@ -120,6 +121,49 @@ const LocationDetailPage = () => {
         } finally {
             setLoadingMenu(false);
         }
+    }
+  };
+
+  // --- XỬ LÝ UPLOAD ẢNH (ADMIN) ---
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!isAdmin) return alert("Bạn không có quyền thực hiện thao tác này.");
+
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('description', 'Uploaded by Admin');
+    
+    setUploadingImg(true);
+    try {
+        await API.post(`/locations/${id}/images`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        alert("Upload ảnh thành công!");
+        // Reload lại thông tin để cập nhật list ảnh
+        fetchData(); 
+    } catch (err) {
+        console.error(err);
+        alert("Lỗi upload ảnh: " + (err.response?.data?.message || err.message));
+    } finally {
+        setUploadingImg(false);
+    }
+  };
+
+  // --- XỬ LÝ XÓA ẢNH (ADMIN) ---
+  const handleDeleteImage = async (imageId) => {
+    if (!isAdmin) return;
+    if (!window.confirm("Bạn chắc chắn muốn xóa ảnh này?")) return;
+
+    try {
+        // Giả định bạn có API xóa ảnh theo ID
+        // Nếu chưa có, bạn cần thêm route DELETE /api/location-images/:id vào backend
+        await API.delete(`/location-images/${imageId}`); 
+        fetchData(); // Reload data
+    } catch (err) {
+        console.error(err);
+        alert("Lỗi xóa ảnh (Có thể API xóa chưa được cấu hình).");
     }
   };
 
@@ -156,7 +200,6 @@ const LocationDetailPage = () => {
     }
   };
 
-  // Hàm xử lý bấm tim
   const handleToggleFavorite = async () => {
     if (!user) return alert("Vui lòng đăng nhập để lưu địa điểm!");
     
@@ -166,7 +209,7 @@ const LocationDetailPage = () => {
       await API.post('/favorites/toggle', { location_id: id });
     } catch (err) {
       console.error(err);
-      setIsFavorited(!isFavorited); // Revert nếu lỗi
+      setIsFavorited(!isFavorited);
       alert("Lỗi kết nối!");
     }
   };
@@ -187,7 +230,6 @@ const LocationDetailPage = () => {
         <div className="title-section" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
             <h1>{location.name}</h1>
             
-            {/* CỤM NÚT TÁC VỤ (Action Buttons) */}
             <div className="action-buttons">
                 {/* Nút Yêu thích */}
                 {isUser && (<button 
@@ -202,12 +244,11 @@ const LocationDetailPage = () => {
                 <button onClick={handleOpenMenu} className="action-btn menu-btn">
                     <FaUtensils /> Xem thực đơn
                 </button>
-
             </div>
         </div>
       </div>
 
-      {/* LAYOUT CHÍNH: THÔNG TIN & MAP */}
+      {/* LAYOUT CHÍNH */}
       <div className="detail-content-layout">
         <div className="detail-info-panel">
           <h3>Thông tin chi tiết</h3>
@@ -225,10 +266,29 @@ const LocationDetailPage = () => {
             </p>
           )}
 
-          {/* ✨ MỤC HÌNH ẢNH (GALLERY) */}
-          {location.images && location.images.length > 0 && (
+          {/* ✨ MỤC HÌNH ẢNH (GALLERY) ĐÃ CẬP NHẬT */}
+          {location.images && location.images.length > 0 ? (
             <div className="detail-gallery-section">
-                <h4>📷 Hình ảnh</h4>
+                <div className="gallery-header">
+                    <h4>📷 Hình ảnh</h4>
+                    {/* ✨ NÚT UPLOAD ẢNH CHO ADMIN */}
+                    {isAdmin && (
+                        <div>
+                            <input 
+                                type="file" 
+                                id="upload-loc-img" 
+                                hidden 
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                disabled={uploadingImg}
+                            />
+                            <label htmlFor="upload-loc-img" className="btn-upload-img">
+                               {uploadingImg ? '⏳ Đang tải...' : <><FaCamera /> Thêm ảnh</>}
+                            </label>
+                        </div>
+                    )}
+                </div>
+
                 <div className="image-gallery-container">
                     {location.images.map((image, index) => (
                         <div key={image.id || index} className="gallery-img-wrapper">
@@ -241,14 +301,51 @@ const LocationDetailPage = () => {
                                     if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
                                 }}
                             />
-                            {/* Placeholder fallback cho gallery */}
+                            {/* Placeholder fallback */}
                             <div className="gallery-placeholder" style={{...getPlaceholderStyle(location.name), display: 'none'}}>
                                 {location.name.charAt(0).toUpperCase()}
                             </div>
+
+                            {/* ✨ NÚT XÓA ẢNH (ADMIN) */}
+                            {isAdmin && (
+                                <button 
+                                    className="btn-delete-img"
+                                    onClick={(e) => {
+                                        e.preventDefault(); 
+                                        handleDeleteImage(image.id);
+                                    }}
+                                    title="Xóa ảnh này"
+                                >
+                                   <FaTrash />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
             </div>
+          ) : (
+             /* Trường hợp chưa có ảnh nào nhưng là Admin thì vẫn hiện nút thêm */
+             isAdmin && (
+                <div className="detail-gallery-section">
+                    <div className="gallery-header">
+                        <h4>📷 Hình ảnh</h4>
+                        <div>
+                            <input 
+                                type="file" 
+                                id="upload-loc-img-empty" 
+                                hidden 
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                disabled={uploadingImg}
+                            />
+                            <label htmlFor="upload-loc-img-empty" className="btn-upload-img">
+                               {uploadingImg ? '⏳ Đang tải...' : <><FaCamera /> Thêm ảnh đầu tiên</>}
+                            </label>
+                        </div>
+                    </div>
+                    <p style={{color: '#999', fontStyle: 'italic'}}>Chưa có hình ảnh nào.</p>
+                </div>
+             )
           )}
         </div>
         
@@ -294,7 +391,6 @@ const LocationDetailPage = () => {
               <div className="review-header">
                 <div className="reviewer-info">
                   <div className="reviewer-avatar">
-                    {/* Logic hiển thị Avatar: Ảnh -> Placeholder chữ cái */}
                     {rev.authorAvatar ? (
                         <>
                             <img 
@@ -329,7 +425,7 @@ const LocationDetailPage = () => {
         </div>
       </div>
 
-      {/* ✨ MODAL HIỂN THỊ MENU */}
+      {/* MODAL HIỂN THỊ MENU */}
       {showMenuModal && (
         <div className="menu-modal-overlay" onClick={() => setShowMenuModal(false)}>
             <div className="menu-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -339,7 +435,6 @@ const LocationDetailPage = () => {
                         <FaTimes />
                     </button>
                 </div>
-                
                 <div className="menu-modal-body">
                     {loadingMenu ? (
                         <div className="menu-loading">⏳ Đang tải món ăn...</div>
@@ -364,7 +459,6 @@ const LocationDetailPage = () => {
             </div>
         </div>
       )}
-
     </div>
   );
 };

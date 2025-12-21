@@ -1,18 +1,10 @@
-/* --- 1. TỔNG THỂ (SỬA LẠI THÀNH FULL PAGE CONTAINER) --- */
+/* --- 1. TỔNG THỂ (FULL PAGE CONTAINER) --- */
 .location-detail-page {
-    /* Xóa max-width ở container cha để nền phủ kín màn hình */
     width: 100%;
     min-height: 100vh;
     padding: 30px 20px;
-    margin: 0; /* Xóa margin auto */
-    
-    /* Sử dụng biến màu nền chung (Sáng: #f9fafb, Tối: #1e1f24) */
+    margin: 0; 
     background-color: var(--bg-color, #f9fafb);
-    
-    /* Xóa style dạng Card cũ */
-    border-radius: 0;
-    box-shadow: none;
-    
     animation: fadeIn 0.4s ease-out;
     box-sizing: border-box;
     transition: background-color 0.3s ease;
@@ -32,8 +24,6 @@
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
-    
-    /* Căn giữa nội dung Header */
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
@@ -122,15 +112,13 @@
     grid-template-columns: 1fr 1.2fr;
     gap: 30px;
     margin-bottom: 40px;
-
-    /* Căn giữa layout */
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
 }
 
 .detail-info-panel {
-    background: #ffffff; /* Nền trắng cho panel */
+    background: #ffffff;
     padding: 25px;
     border-radius: 16px;
     border: 1px solid #e5e7eb;
@@ -176,13 +164,11 @@
 .detail-map { width: 100%; height: 100%; }
 
 
-/* --- 5. PHẦN ĐÁNH GIÁ (REVIEWS) - NÂNG CẤP --- */
+/* --- 5. PHẦN ĐÁNH GIÁ (REVIEWS) --- */
 .reviews-section {
     border-top: 1px solid #e5e7eb;
     padding-top: 40px;
     margin-top: 20px;
-
-    /* Căn giữa phần review */
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
@@ -197,7 +183,7 @@
     gap: 10px;
 }
 
-/* KHUNG FORM REVIEW ĐẸP HƠN */
+/* KHUNG FORM REVIEW */
 .review-form {
     background: #fff;
     padding: 25px;
@@ -213,7 +199,6 @@
     border-color: #d1d9e6;
 }
 
-/* Phần chọn sao */
 .rating-select {
     display: flex;
     align-items: center;
@@ -243,7 +228,6 @@
     font-size: 0.9rem;
 }
 
-/* Textarea xịn xò */
 .review-textarea {
     width: 100%;
     min-height: 120px;
@@ -271,7 +255,6 @@
     color: #aaa;
 }
 
-/* Nút gửi đánh giá */
 .btn-submit-review {
     background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
@@ -298,14 +281,12 @@
     box-shadow: none;
 }
 
-/* Clear float */
 .review-form::after {
     content: "";
     display: table;
     clear: both;
 }
 
-/* Login Prompt */
 .login-prompt {
     text-align: center;
     padding: 30px;
@@ -317,7 +298,6 @@
     margin-bottom: 30px;
 }
 
-/* LIST REVIEWS */
 .review-list {
     display: flex;
     flex-direction: column;
@@ -401,7 +381,7 @@
     padding-left: 60px;
 }
 
-/* --- 6. MENU MODAL (POPUP) --- */
+/* --- 6. MENU MODAL --- */
 .menu-modal-overlay {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
@@ -454,16 +434,44 @@
 .menu-desc { font-size: 0.85rem; color: #777; margin: 0; }
 .menu-item-price { font-weight: bold; color: #e67e22; white-space: nowrap; margin-left: 10px; }
 
-/* --- 7. IMAGE GALLERY --- */
+/* --- 7. IMAGE GALLERY & UPLOAD --- */
 .detail-gallery-section {
     margin-top: 30px;
     border-top: 1px solid #e5e7eb;
     padding-top: 20px;
-    /* Căn giữa */
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
 }
+
+.gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.gallery-header h4 {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Nút Upload */
+.btn-upload-img {
+    background: #3498db;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.btn-upload-img:hover { background: #2980b9; }
 
 .image-gallery-container {
     display: flex;
@@ -473,24 +481,25 @@
 }
 
 .gallery-img-wrapper {
-    min-width: 150px;
+    min-width: 160px;
     height: 120px;
     border-radius: 8px;
     overflow: hidden;
     position: relative;
     border: 1px solid #e5e7eb;
     background-color: #f0f0f0;
+    transition: transform 0.2s;
+}
+
+.gallery-img-wrapper:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
 .gallery-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.gallery-image:hover {
-    transform: scale(1.1);
 }
 
 .gallery-placeholder {
@@ -505,7 +514,32 @@
     user-select: none;
 }
 
-/* --- TRẠNG THÁI LOADING/ERROR (Để phủ kín nền) --- */
+/* Nút Xóa Ảnh */
+.btn-delete-img {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    border: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0; /* Ẩn mặc định */
+    transition: opacity 0.2s;
+    z-index: 5;
+    font-size: 0.8rem;
+}
+
+.gallery-img-wrapper:hover .btn-delete-img {
+    opacity: 1; /* Hiện khi hover */
+}
+
+/* Loading/Error Page */
 .detail-page-loading, .detail-page-error {
     width: 100%;
     min-height: 100vh;
@@ -514,7 +548,7 @@
     justify-content: center;
     font-size: 1.2rem;
     color: #666;
-    background-color: var(--bg-color, #f9fafb); /* Dùng màu nền theme */
+    background-color: var(--bg-color, #f9fafb);
     margin: 0;
     box-sizing: border-box;
 }
@@ -524,70 +558,30 @@
 /* ================================================= */
 
 @media (max-width: 768px) {
-    .location-detail-page {
-        padding: 15px;
-    }
-
-    .detail-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-
+    .location-detail-page { padding: 15px; }
+    .detail-header { flex-direction: column; align-items: flex-start; gap: 15px; }
     .back-button { width: 100%; justify-content: center; }
-
-    .title-section {
-        width: 100%;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .detail-header h1 {
-        font-size: 1.5rem;
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
+    .title-section { width: 100%; flex-direction: column; align-items: flex-start; }
+    .detail-header h1 { font-size: 1.5rem; width: 100%; margin-bottom: 10px; }
+    
     .action-buttons {
         width: 100%;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
     }
+    .action-btn { width: 100%; justify-content: center; padding: 12px; }
     
-    .action-btn { 
-        width: 100%; 
-        justify-content: center; 
-        padding: 12px;
-    }
-    
-    .detail-content-layout {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    /* Đảo thứ tự: Bản đồ lên trên cùng trên Mobile */
-    .detail-map-panel {
-        order: -1; 
-        height: 250px;
-    }
-
+    .detail-content-layout { grid-template-columns: 1fr; gap: 20px; }
+    .detail-map-panel { order: -1; height: 250px; }
     .detail-info-panel { padding: 15px; }
 
     .menu-modal-overlay { padding: 10px; }
     .menu-modal-content { max-height: 80vh; }
     .menu-item-display { flex-direction: column; align-items: flex-start; }
     .menu-item-price { margin-left: 0; margin-top: 5px; color: #d35400; }
-
     .review-comment { padding-left: 0; margin-top: 10px; }
     .btn-submit-review { width: 100%; float: none; }
-    .star { font-size: 1.8rem; }
-}
-
-@media (max-width: 400px) {
-    .action-buttons {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* =========================================
@@ -597,13 +591,7 @@ body.dark-mode .location-detail-page {
     background-color: #1e1f24;
 }
 
-/* Loading & Error State in Dark Mode */
-body.dark-mode .detail-page-loading,
-body.dark-mode .detail-page-error {
-    background-color: #1e1f24;
-    color: #9ca3af;
-}
-
+/* Card & Panels Background */
 body.dark-mode .detail-info-panel,
 body.dark-mode .review-form,
 body.dark-mode .review-item,
@@ -613,12 +601,21 @@ body.dark-mode .menu-modal-content {
     color: #f9fafb;
 }
 
+/* Border Adjustment */
+body.dark-mode .detail-header,
+body.dark-mode .reviews-section,
+body.dark-mode .detail-gallery-section {
+    border-color: #374151;
+}
+
+/* Text Colors */
 body.dark-mode .detail-header h1,
 body.dark-mode .detail-info-panel h3,
 body.dark-mode .reviews-section h4,
 body.dark-mode .reviewer-name,
 body.dark-mode .menu-item-info h4,
-body.dark-mode .menu-modal-header h2 {
+body.dark-mode .menu-modal-header h2,
+body.dark-mode .gallery-header h4 {
     color: #f9fafb;
 }
 
@@ -628,6 +625,7 @@ body.dark-mode .menu-desc {
     color: #9ca3af;
 }
 
+/* Button & Inputs */
 body.dark-mode .back-button {
     background: rgba(255, 255, 255, 0.1);
     border-color: #374151;
@@ -639,7 +637,6 @@ body.dark-mode .review-textarea {
     border-color: #374151;
     color: #f9fafb;
 }
-
 body.dark-mode .review-textarea:focus {
     background-color: #2a2d33;
     border-color: #3b82f6;
@@ -655,7 +652,6 @@ body.dark-mode .menu-modal-header {
     background-color: #1f2937;
     border-bottom-color: #374151;
 }
-
 body.dark-mode .close-modal-btn {
     color: #f9fafb;
     background: none;
@@ -663,7 +659,6 @@ body.dark-mode .close-modal-btn {
     font-size: 1.2rem;
     cursor: pointer;
 }
-
 body.dark-mode .menu-item-display {
     border-bottom-color: #374151;
 }
@@ -675,4 +670,16 @@ body.dark-mode .fav-btn {
 
 body.dark-mode .review-item:hover {
     background-color: #32363e;
+}
+
+/* Page Status */
+body.dark-mode .detail-page-loading,
+body.dark-mode .detail-page-error {
+    background-color: #1e1f24;
+    color: #9ca3af;
+}
+
+body.dark-mode .gallery-img-wrapper {
+    border-color: #374151;
+    background-color: #1f2937;
 }
