@@ -1,4 +1,3 @@
-// src/LocationListPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +8,27 @@ import './LocationListPage.css';
 
 // Cấu hình API URL
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// Hàm helper chọn màu nền ngẫu nhiên dựa trên tên quán
+const getPlaceholderStyle = (name) => {
+  const gradients = [
+    'linear-gradient(135deg, #FF6B6B, #EE5253)', // Đỏ cam
+    'linear-gradient(135deg, #48DBFB, #0ABDE3)', // Xanh dương
+    'linear-gradient(135deg, #1DD1A1, #10AC84)', // Xanh lá
+    'linear-gradient(135deg, #FF9F43, #EE5A24)', // Cam
+    'linear-gradient(135deg, #5F27CD, #341F97)', // Tím
+    'linear-gradient(135deg, #ff9a9e, #fad0c4)', // Hồng phấn
+  ];
+  
+  // Tính hash đơn giản từ tên để chọn màu cố định cho mỗi tên
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % gradients.length;
+  
+  return { background: gradients[index] };
+};
 
 const LocationListPage = () => {
   const [locations, setLocations] = useState([]);
@@ -155,7 +175,7 @@ const LocationListPage = () => {
               setSearchTerm(''); 
               fetchDefaultLocations(); // Nút thử lại sẽ xóa search và load lại nearby
           }}>
-             {searchTerm ? 'Xem tất cả' : 'Thử lại'}
+              {searchTerm ? 'Xem tất cả' : 'Thử lại'}
           </button>
         </div>
       )}
@@ -165,12 +185,31 @@ const LocationListPage = () => {
         {currentLocations.map((loc) => (
           <div key={loc.id} className="location-card" onClick={() => navigate(`/locations/${loc.id}`)}>
             <div className="card-image">
-              <img 
-                src={loc.images && loc.images.length > 0 
-                  ? loc.images[0].url 
-                  : 'https://via.placeholder.com/300x200?text=No+Image'} 
-                alt={loc.name} 
-              />
+              {/* 👇 LOGIC HIỂN THỊ ẢNH HOẶC CHỮ CÁI ĐẦU */}
+              {loc.images && loc.images.length > 0 ? (
+                <img 
+                  src={loc.images[0].url} 
+                  alt={loc.name} 
+                  onError={(e) => {
+                    // Nếu ảnh lỗi link, ẩn ảnh đi để hiện placeholder bên dưới (nếu cấu trúc DOM cho phép)
+                    // Hoặc đơn giản là thay src bằng ảnh mặc định
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex'; // Hiển thị placeholder ẩn (nếu có)
+                  }}
+                />
+              ) : (
+                <div className="img-placeholder" style={getPlaceholderStyle(loc.name)}>
+                  {loc.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              
+              {/* Fallback placeholder ẩn để hiện khi ảnh lỗi (Optional) */}
+              {loc.images && loc.images.length > 0 && (
+                 <div className="img-placeholder fallback" style={{...getPlaceholderStyle(loc.name), display: 'none'}}>
+                    {loc.name.charAt(0).toUpperCase()}
+                 </div>
+              )}
+
               {/* Chỉ hiện khoảng cách nếu có tọa độ user */}
               {userLocation.loaded && !userLocation.error && (
                   <span className="distance-badge">{getDistance(loc)} km</span>
@@ -193,7 +232,7 @@ const LocationListPage = () => {
         ))}
       </div>
 
-      {/* Phân trang (GIỮ NGUYÊN) */}
+      {/* --- PHÂN TRANG CONTROL --- */}
       {!loading && !error && locations.length > itemsPerPage && (
         <div className="pagination-controls">
           <button 

@@ -7,13 +7,15 @@ import MainLayout from './components/MainLayout';
 import LeafletMapComponent from './MapContainer';
 // 👇 Đảm bảo đường dẫn này đúng với máy bạn (src/LocationCRUD.js hay src/pages/LocationCRUD.js?)
 import LocationCRUD from './pages/LocationCRUD';
-import LocationListPage from './pages/LocationListPage'; // ✨ THÊM DÒNG NÀY
+import LocationListPage from './pages/LocationListPage'; 
 import LocationDetailPage from './pages/LocationDetailPage.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import FavoriteLocationsPage from './pages/FavoriteLocationsPage';
 import AdminMenuManager from './pages/AdminMenuManager';
 import { AuthProvider, useAuth } from './context/AuthContext';
+// 👇 1. Import LocationProvider (Bắt buộc để MapContainer hoạt động)
+import { LocationProvider } from './context/LocationContext';
 
 // 👇 Import Page Gợi ý Món ăn (Mới)
 import DishRecommendationPage from './pages/DishRecommendationPage';
@@ -42,8 +44,10 @@ function AppRoutes() {
       <Route path="/" element={<MainLayout />}>
         {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
-        {/* Route cho trang gợi ý món ăn */}
-        <Route path="/recommendations" element={<DishRecommendationPage />} />
+
+        {/* 👇 Thêm Route cho trang Gợi ý món ăn */}
+        <Route path="recommendations" element={<DishRecommendationPage />} />
+
         {/* Route cho trang danh sách địa điểm gần đây */}
         <Route path="nearby" element={<LocationListPage />} />
         {/* Route cho trang danh sách địa điểm yêu thích */}
@@ -63,6 +67,7 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/admin/menu-manager" 
           element={
@@ -85,7 +90,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-         <AppRoutes />
+        {/* 👇 2. Bọc LocationProvider vào đây để MapContainer và các trang khác có thể dùng */}
+        <LocationProvider>
+           <AppRoutes />
+        </LocationProvider>
       </AuthProvider>
     </Router>
   );

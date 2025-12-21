@@ -1,5 +1,3 @@
-/* src/LocationListPage.css */
-
 .list-page-container {
   padding: 30px 20px;
   max-width: 1200px;
@@ -77,12 +75,36 @@
   height: 180px;
   width: 100%;
   position: relative;
+  background-color: #f0f0f0; /* Màu nền khi chưa load ảnh */
 }
 
 .card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block; /* Đảm bảo không có khoảng trắng dư thừa */
+}
+
+/* 👇 Style mới cho placeholder chữ cái */
+.img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem; /* Chữ cái to rõ */
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  user-select: none;
+}
+
+/* Fallback placeholder khi ảnh lỗi */
+.img-placeholder.fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1; /* Nằm dưới ảnh, hiện lên khi ảnh bị ẩn */
 }
 
 .distance-badge {
@@ -96,6 +118,7 @@
   font-size: 0.85rem;
   font-weight: bold;
   backdrop-filter: blur(2px);
+  z-index: 2; /* Đảm bảo nổi lên trên ảnh hoặc placeholder */
 }
 
 .card-content {
@@ -263,6 +286,7 @@
   .back-btn {
     width: 100%;
     text-align: center;
+    justify-content: center;
   }
 
   .locations-grid {

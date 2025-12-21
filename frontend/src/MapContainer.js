@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import { MapContainer as LeafletMapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import API from './api'; 
-import useGeolocation from './hooks/useGeolocation';
+// 👇 Thay useGeolocation bằng useLocationContext
+import { useLocationContext } from './context/LocationContext'; 
 import SimulationController from './components/SimulationController';
 import { useAuth } from './context/AuthContext';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// ✨ IMPORT MỚI: Modal, Icon và CSS
 import ProposeLocationModal from './pages/ProposeLocationModal';
 import { FaPlusCircle, FaCrosshairs, FaCheck, FaTimes } from 'react-icons/fa';
-import './MapContainer.css'; // Import file CSS mới tạo ở bước 3
+import './MapContainer.css'; 
 
-// --- FIX ICON LEAFLET ---
+// --- FIX ICON LEAFLET (Giữ nguyên) ---
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -31,7 +31,6 @@ const currentLocationIcon = new L.Icon({
   className: 'current-location-marker' 
 });
 
-// Icon màu đỏ cho Marker tạm thời (Khi chọn vị trí thêm mới)
 const tempMarkerIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -43,7 +42,7 @@ const tempMarkerIcon = new L.Icon({
 
 const hanoiPosition = [21.028511, 105.854199];
 
-// --- COMPONENT HELPER ---
+// --- COMPONENT HELPER (Giữ nguyên) ---
 const FitBoundsToRoute = ({ route }) => {
   const map = useMap();
   useEffect(() => {
@@ -64,19 +63,18 @@ const ChangeView = ({ center, zoom }) => {
   return null;
 };
 
-// ✨ COMPONENT MỚI: Xử lý Click trên bản đồ để chọn vị trí
 const MapClickHandler = ({ isAddingMode, onLocationSelect }) => {
     useMapEvents({
       click(e) {
         if (isAddingMode) {
-          onLocationSelect(e.latlng); // Trả về { lat, lng }
+          onLocationSelect(e.latlng); 
         }
       },
     });
     return null;
 };
 
-const LeafletMapComponent = () => {
+const MapContainer = () => {
   const { userRole } = useAuth();
   const isAdmin = userRole === 'admin';
   const navigate = useNavigate();
@@ -91,30 +89,45 @@ const LeafletMapComponent = () => {
   const [routeProfile, setRouteProfile] = useState(null); 
   const [isFetchingRoute, setIsFetchingRoute] = useState(false); 
 
-  const userLocation = useGeolocation();
-  const [simulatedLocation, setSimulatedLocation] = useState(null);
+  // 👇 SỬ DỤNG CONTEXT: Lấy vị trí và hàm cập nhật giả lập từ Global State
+  // Lưu ý: userLocation ở đây đã được xử lý trong Context (nếu có giả lập thì lấy giả lập, không thì lấy thật)
+  const { location: userLocation, setSimulatedLocation } = useLocationContext();
 
-  // ✨ STATE MỚI: CHỨC NĂNG ĐÓNG GÓP ĐỊA ĐIỂM
-  const [isAddingMode, setIsAddingMode] = useState(false); // Trạng thái đang thêm
-  const [tempMarker, setTempMarker] = useState(null); // Vị trí marker tạm thời (ghim đỏ)
-  const [showProposeModal, setShowProposeModal] = useState(false); // Hiện form nhập liệu
+  const [isAddingMode, setIsAddingMode] = useState(false); 
+  const [tempMarker, setTempMarker] = useState(null); 
+  const [showProposeModal, setShowProposeModal] = useState(false); 
 
-  // User location logic
+  const [isDebugMode, setIsDebugMode] = useState(false);
+
+  // Logic xác định vị trí để hiển thị trên bản đồ
   const effectiveUserLocation = useMemo(() => {
+    // Nếu Admin đang ở chế độ xem Admin -> Không cần quan tâm vị trí User
     if (isAdminMode) {
       return { loaded: false, coordinates: { lat: null, lng: null }, error: null };
     }
-    if (simulatedLocation) {
-      return { loaded: true, coordinates: simulatedLocation, error: null };
-    }
+    // Ngược lại, trả về vị trí từ Context (đã bao gồm logic thật/giả lập)
     return userLocation; 
-  }, [simulatedLocation, userLocation, isAdminMode]);
+  }, [userLocation, isAdminMode]);
 
-  // Map View State
   const [mapCenter, setMapCenter] = useState(hanoiPosition);
   const [mapZoom, setMapZoom] = useState(13);
 
-  // Effect view map
+  // Debug Mode Key Listener
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.shiftKey && (event.key === 'D' || event.key === 'd')) {
+        event.preventDefault();
+        setIsDebugMode(prev => !prev);
+        console.log("Debug Mode toggled");
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Update Map View
   useEffect(() => {
     if (isAdminMode) {
       setMapCenter(hanoiPosition);
@@ -154,7 +167,6 @@ const LeafletMapComponent = () => {
 
   // Routing Logic
   const getDirections = async (start, end, profile = 'driving-car') => {
-    // Lưu ý: Thay API KEY thật của bạn vào đây
     const ORS_API_KEY = 'YOUR_OPENROUTESERVICE_API_KEY'; 
 
     if (ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY') {
@@ -211,16 +223,17 @@ const LeafletMapComponent = () => {
   };
 
   const handleUserMarkerDrag = (e) => {
-    if (!isAdmin || isAdminMode) return;
-    const newLatLng = e.target.getLatLng();
-    setSimulatedLocation({ lat: newLatLng.lat, lng: newLatLng.lng });
+    if ((!isAdminMode && isDebugMode) || (isAdmin && !isAdminMode)) {
+        const newLatLng = e.target.getLatLng();
+        // 👇 Gọi hàm setSimulatedLocation từ Context
+        setSimulatedLocation({ lat: newLatLng.lat, lng: newLatLng.lng });
+    }
   };
 
-  // ✨ CÁC HÀM XỬ LÝ ĐÓNG GÓP ĐỊA ĐIỂM MỚI
+  // Add Mode Functions
   const toggleAddMode = () => {
     const newState = !isAddingMode;
     setIsAddingMode(newState);
-    // Nếu tắt chế độ thêm thì xóa marker tạm và ẩn modal
     if (!newState) {
         setTempMarker(null);
         setShowProposeModal(false);
@@ -228,7 +241,7 @@ const LeafletMapComponent = () => {
   };
 
   const handleMapClick = (latlng) => {
-    setTempMarker(latlng); // Đặt ghim đỏ tại vị trí click
+    setTempMarker(latlng); 
   };
 
   const handleUseCurrentLocation = () => {
@@ -238,7 +251,7 @@ const LeafletMapComponent = () => {
             lng: effectiveUserLocation.coordinates.lng 
         };
         setTempMarker(currentPos);
-        setMapCenter([currentPos.lat, currentPos.lng]); // Zoom đến đó
+        setMapCenter([currentPos.lat, currentPos.lng]); 
     } else {
         alert("Chưa lấy được vị trí của bạn.");
     }
@@ -248,14 +261,13 @@ const LeafletMapComponent = () => {
       setShowProposeModal(false);
       setIsAddingMode(false);
       setTempMarker(null);
-      // Có thể fetch lại location nếu cần (để user thấy ngay quán chờ duyệt nếu logic cho phép)
       fetchLocations(); 
   };
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
 
-      {/* --- CÔNG CỤ ĐÓNG GÓP ĐỊA ĐIỂM (HIỆN KHI KHÔNG PHẢI ADMIN VIEW) --- */}
+      {/* CONTROLS */}
       {!isAdminMode && (
           <div className="contribute-controls">
             <button 
@@ -265,7 +277,6 @@ const LeafletMapComponent = () => {
             >
                 {isAddingMode ? <><FaTimes /> Hủy thêm</> : <><FaPlusCircle /> Đóng góp địa điểm</>}
             </button>
-            
             {isAddingMode && (
                 <button className="btn-use-gps" onClick={handleUseCurrentLocation}>
                     <FaCrosshairs /> Dùng vị trí hiện tại
@@ -274,21 +285,28 @@ const LeafletMapComponent = () => {
           </div>
       )}
 
-      {/* HƯỚNG DẪN KHI ĐANG Ở CHẾ ĐỘ THÊM */}
       {isAddingMode && !tempMarker && (
-          <div className="add-mode-instruction">
-              👇 Chạm vào bản đồ để chọn vị trí quán
-          </div>
+          <div className="add-mode-instruction">👇 Chạm vào bản đồ để chọn vị trí quán</div>
       )}
 
-      {/* --- CÁC PANEL CŨ (Giữ nguyên) --- */}
-      {isAdmin && !isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
-        <SimulationController
-          initialPosition={effectiveUserLocation.coordinates}
-          onPositionChange={setSimulatedLocation}
-        />
+      {/* SIMULATION CONTROLLER (Sử dụng Context) */}
+      {isDebugMode && !isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
+        <>
+            <SimulationController
+              initialPosition={effectiveUserLocation.coordinates}
+              onPositionChange={setSimulatedLocation} // Cập nhật vào Context
+            />
+            <div style={{
+                position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(255, 0, 0, 0.8)', color: 'white', padding: '5px 10px',
+                borderRadius: '5px', zIndex: 2000, fontSize: '0.8rem', pointerEvents: 'none'
+            }}>
+                🔧 Debug Mode: ON
+            </div>
+        </>
       )}
 
+      {/* Route Summary */}
       {route && (
         <div className="route-summary-panel">
           {routeSummary && (
@@ -328,19 +346,17 @@ const LeafletMapComponent = () => {
         </div>
       )}
 
-      {/* --- MAP CONTAINER --- */}
-      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+      {/* MAP */}
+      <LeafletMapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
         <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
 
         <ChangeView center={mapCenter} zoom={mapZoom} />
         <FitBoundsToRoute route={route} />
 
-        {/* XỬ LÝ CLICK ĐỂ THÊM ĐỊA ĐIỂM */}
         <MapClickHandler isAddingMode={isAddingMode} onLocationSelect={handleMapClick} />
 
         {route && <Polyline positions={route} color="#3498db" weight={5} />}
 
-        {/* ✨ MARKER TẠM THỜI (GHIM ĐỎ) */}
         {tempMarker && (
             <Marker position={tempMarker} icon={tempMarkerIcon}>
                 <Popup isOpen={true} closeButton={false} autoPan={true}>
@@ -357,34 +373,33 @@ const LeafletMapComponent = () => {
             </Marker>
         )}
 
-        {/* MARKER VỊ TRÍ NGƯỜI DÙNG */}
         {!isAdminMode && effectiveUserLocation.coordinates.lat && (
           <>
             <Marker 
               position={[effectiveUserLocation.coordinates.lat, effectiveUserLocation.coordinates.lng]}
               icon={currentLocationIcon}
-              draggable={isAdmin && !isAdminMode}
+              draggable={isDebugMode && !isAdminMode}
               eventHandlers={{ dragend: handleUserMarkerDrag }}
             >
-              <Popup>Bạn đang ở đây</Popup>
+              <Popup>
+                Bạn đang ở đây 
+                {effectiveUserLocation.isSimulated && <span style={{color:'red'}}> (Giả lập)</span>}
+              </Popup>
             </Marker>
             <Circle center={[effectiveUserLocation.coordinates.lat, effectiveUserLocation.coordinates.lng]} radius={radius * 1000} />
           </>
         )}
 
-        {/* DANH SÁCH CÁC ĐỊA ĐIỂM */}
         {locations.map(loc => (
           <Marker key={loc.id} position={[loc.latitude, loc.longitude]}> 
             <Popup> 
               <div className="location-popup-content">
                 <h4 className="popup-title">{loc.name}</h4>
-                
                 <div className="popup-info-line"><span>📍</span><span>{loc.address}</span></div>
                 {loc.phone_number && <div className="popup-info-line"><span>📞</span><span>{loc.phone_number}</span></div>}
                 {(loc.min_price > 0 || loc.max_price > 0) && (
                   <div className="popup-info-line"><span>💰</span><span>{loc.min_price.toLocaleString()} - {loc.max_price.toLocaleString()} VNĐ</span></div>
                 )}
-
                 {isAdminMode && (
                   <div className={`popup-status ${loc.is_approved ? 'approved' : 'pending'}`}>
                     {loc.is_approved ? "✅ Đã duyệt" : "❌ Chờ duyệt"}
@@ -414,9 +429,8 @@ const LeafletMapComponent = () => {
             </Popup> 
           </Marker>
         ))}
-      </MapContainer>
+      </LeafletMapContainer>
 
-      {/* ✨ MODAL NHẬP LIỆU */}
       {showProposeModal && tempMarker && (
         <ProposeLocationModal 
             lat={tempMarker.lat}
@@ -429,4 +443,4 @@ const LeafletMapComponent = () => {
   );
 };
 
-export default LeafletMapComponent;
+export default MapContainer;
