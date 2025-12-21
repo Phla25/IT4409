@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import useGeolocation from '../hooks/useGeolocation';
 import './DishRecommendationPage.css';
-import API from '../api';
+
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Hàm helper: Tạo màu gradient ngẫu nhiên dựa trên tên món
@@ -19,8 +20,10 @@ const getPlaceholderStyle = (name) => {
   ];
   
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  if (name) {
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
   }
   const index = Math.abs(hash) % gradients.length;
   
@@ -46,7 +49,7 @@ const DishRecommendationPage = () => {
     setLoading(true);
     try {
       const { lat, lng } = userLocation.coordinates;
-      const res = await API.get(`/locations/recommendations/dishes?lat=${lat}&lng=${lng}`);
+      const res = await axios.get(`${API_BASE}/locations/recommendations/dishes?lat=${lat}&lng=${lng}`);
       if (res.data.success) {
         setRecommendations(res.data);
       }
@@ -112,9 +115,9 @@ const DishRecommendationPage = () => {
                       src={dish.dish_image} 
                       alt={dish.dish_name} 
                       onError={(e) => {
-                         // Nếu ảnh lỗi, ẩn ảnh đi và hiện placeholder kế tiếp (fallback)
-                         e.target.style.display = 'none';
-                         if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                          // Nếu ảnh lỗi, ẩn ảnh đi và hiện placeholder kế tiếp (fallback)
+                          e.target.style.display = 'none';
+                          if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
                       }}
                     />
                     {/* Fallback placeholder (ẩn mặc định, hiện khi img lỗi) */}
