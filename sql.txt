@@ -203,3 +203,5 @@ ALTER TABLE Reviews DROP COLUMN IF EXISTS dish_id;
 
 -- Cuối cùng: Xóa bảng Dishes cũ
 DROP TABLE IF EXISTS Dishes;
+
+ALTER TABLE users ADD COLUMN session_id VARCHAR(255);

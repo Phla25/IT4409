@@ -5,6 +5,7 @@ import useGeolocation from '../hooks/useGeolocation';
 import { calculateDistance } from '../utils/distance';
 import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa'; 
 import './LocationListPage.css';
+import API from '../api';
 
 // Cấu hình API URL
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -55,10 +56,9 @@ const LocationListPage = () => {
       setError(null);
       const { lat, lng } = userLocation.coordinates;
       
-      const response = await axios.get(
-        `${API_BASE}/locations/nearby?lat=${lat}&lng=${lng}&radius=5`
+      const response = await API.get(
+        `/locations/nearby?lat=${lat}&lng=${lng}&radius=5`
       );
-
       if (response.data.success) {
         setLocations(response.data.data);
         setCurrentPage(1);
@@ -97,7 +97,7 @@ const LocationListPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE}/locations/search?keyword=${searchTerm}`);
+      const response = await API.get(`/locations/search?keyword=${searchTerm}`);
       if (response.data.success) {
         setLocations(response.data.data);
         setCurrentPage(1); 

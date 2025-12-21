@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # 1. BACKEND
   backend:
@@ -8,6 +10,12 @@ services:
       - "5000:5000"
     env_file:
       - ./backend/.env
+    # 👇 THÊM ĐOẠN NÀY ĐỂ CHỐNG DOS/DDOS (Quá tải tài nguyên)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'     # Chỉ cho dùng tối đa 50% của 1 nhân CPU
+          memory: 512M     # Chỉ cho dùng tối đa 512MB RAM
 
   # 2. FRONTEND
   frontend:
@@ -15,6 +23,12 @@ services:
     container_name: foodmap_frontend
     restart: always
     ports:
-      - "3000:80"
+      - "3001:80" # Lưu ý port bạn đang dùng (3000 hoặc 3001)
     depends_on:
       - backend
+    # 👇 THÊM CHO FRONTEND LUÔN
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
