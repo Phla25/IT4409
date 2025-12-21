@@ -5,19 +5,37 @@ const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }) => {
-  // Lấy theme từ localStorage hoặc mặc định là 'light'
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  // 1. Logic khởi tạo thông minh
+  const [theme, setTheme] = useState(() => {
+    // Ưu tiên 1: Lấy từ LocalStorage (người dùng đã từng chọn)
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme;
+    }
+
+    // Ưu tiên 2: Nếu chưa chọn bao giờ, kiểm tra cài đặt hệ thống máy tính
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+
+    // Mặc định: Light
+    return 'light';
+  });
 
   useEffect(() => {
-    // Cập nhật class cho body mỗi khi theme thay đổi
-    if (theme === 'light') {
-      document.body.classList.add('light-mode');
-      document.body.classList.remove('dark-mode');
+    const root = document.body;
+
+    // Xóa sạch các class cũ để tránh xung đột
+    root.classList.remove('light-mode', 'dark-mode');
+
+    // Thêm class tương ứng để CSS thuần (App.css) hoạt động
+    if (theme === 'dark') {
+      root.classList.add('dark-mode');
     } else {
-      document.body.classList.add('dark-mode');
-      document.body.classList.remove('light-mode');
+      root.classList.add('light-mode');
     }
-    // Lưu vào localStorage
+
+    // Lưu lựa chọn vào localStorage
     localStorage.setItem('theme', theme);
   }, [theme]);
 
