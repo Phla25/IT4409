@@ -3,7 +3,15 @@ import API from '../api';
 import './AdminMenuManager.css';
 
 const AdminMenuManager = () => {
-  const [activeTab, setActiveTab] = useState('base'); // Tab mặc định: Kho món
+  // ✨ SỬA: Lấy trạng thái từ bộ nhớ tạm (nếu có)
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('admin_menu_active_tab') || 'base';
+  });
+
+  // ✨ SỬA: Mỗi khi đổi tab, lưu lại vào bộ nhớ
+  useEffect(() => {
+    sessionStorage.setItem('admin_menu_active_tab', activeTab);
+  }, [activeTab]);
 
   return (
     <div className="admin-menu-container">
@@ -37,17 +45,13 @@ const AdminMenuManager = () => {
 // COMPONENT 1: QUẢN LÝ KHO MÓN (HỆ THỐNG)
 // ==========================================
 const BaseDishPanel = () => {
-  // State dữ liệu danh sách
   const [dishes, setDishes] = useState([]); 
   const [filteredDishes, setFilteredDishes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // State cho Form
   const [formData, setFormData] = useState({ id: null, name: '', description: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState({ type: '', msg: '' });
 
-  // 1. Load danh sách món từ Server
   const fetchDishes = async () => {
     try {
       const res = await API.get('/base-dishes');
@@ -63,7 +67,6 @@ const BaseDishPanel = () => {
     fetchDishes();
   }, []);
 
-  // 2. Xử lý tìm kiếm
   useEffect(() => {
     const lowerTerm = searchTerm.toLowerCase();
     const results = dishes.filter(d => 
@@ -73,7 +76,6 @@ const BaseDishPanel = () => {
     setFilteredDishes(results);
   }, [searchTerm, dishes]);
 
-  // 3. Xử lý Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
@@ -92,16 +94,13 @@ const BaseDishPanel = () => {
         });
         setStatus({ type: 'success', msg: `✅ Đã thêm mới món "${formData.name}"` });
       }
-      
       handleCancelEdit();
       fetchDishes();
-
     } catch (err) {
       setStatus({ type: 'error', msg: `❌ Lỗi: ${err.response?.data?.message || err.message}` });
     }
   };
 
-  // 4. Chế độ Sửa
   const handleEditClick = (dish) => {
     setFormData({ id: dish.id, name: dish.name, description: dish.description || '' });
     setIsEditing(true);
@@ -109,7 +108,6 @@ const BaseDishPanel = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 5. Hủy sửa
   const handleCancelEdit = () => {
     setFormData({ id: null, name: '', description: '' });
     setIsEditing(false);
@@ -118,8 +116,6 @@ const BaseDishPanel = () => {
 
   return (
     <div className="menu-manager-grid">
-      
-      {/* --- CỘT TRÁI: FORM NHẬP/SỬA --- */}
       <div className="panel" style={{ height: 'fit-content', position: 'sticky', top: '20px' }}>
         <h3 style={{ borderBottom: isEditing ? '2px solid #f39c12' : '2px solid #27ae60', paddingBottom: 10, marginTop: 0, color: isEditing ? '#e67e22' : '#27ae60' }}>
             {isEditing ? '✏️ Chỉnh Sửa Món Ăn' : '✨ Thêm Món Mới'}
@@ -162,22 +158,17 @@ const BaseDishPanel = () => {
                     style={{ background: isEditing ? 'linear-gradient(135deg, #f39c12, #e67e22)' : 'linear-gradient(135deg, #27ae60, #2ecc71)', flex: 1 }}>
                 {isEditing ? '💾 Lưu Thay Đổi' : '➕ Lưu vào Kho'}
             </button>
-            
             {isEditing && (
-                <button type="button" onClick={handleCancelEdit} className="btn-cancel">
-                    Hủy
-                </button>
+                <button type="button" onClick={handleCancelEdit} className="btn-cancel">Hủy</button>
             )}
           </div>
         </form>
       </div>
 
-      {/* --- CỘT PHẢI: DANH SÁCH MÓN --- */}
       <div className="panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h3 style={{margin: 0, color: '#34495e'}}>📋 Kho Món ({filteredDishes.length})</h3>
         </div>
-
         <div className="form-group" style={{marginBottom: '20px'}}>
             <input 
                 type="text" 
@@ -187,7 +178,6 @@ const BaseDishPanel = () => {
                 style={{ padding: '12px 20px', borderRadius: '30px', border: '1px solid #ddd', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
             />
         </div>
-
         <div style={{ maxHeight: '600px', overflowY: 'auto', paddingRight: '5px' }}>
             {filteredDishes.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px', color: '#95a5a6' }}>
@@ -205,14 +195,7 @@ const BaseDishPanel = () => {
                                 </span>
                             </div>
                             <div className="action-btn-group">
-                                <button 
-                                    className="btn-icon btn-edit"
-                                    onClick={() => handleEditClick(dish)}
-                                    title="Chỉnh sửa món này"
-                                >
-                                    ✏️
-                                </button>
-                                {/* Có thể thêm nút xóa ở đây nếu cần */}
+                                <button className="btn-icon btn-edit" onClick={() => handleEditClick(dish)} title="Chỉnh sửa món này">✏️</button>
                             </div>
                         </div>
                     ))}
@@ -229,7 +212,12 @@ const BaseDishPanel = () => {
 // ==========================================
 const LocationMenuPanel = () => {
   const [locations, setLocations] = useState([]);
-  const [selectedLocationId, setSelectedLocationId] = useState('');
+  
+  // ✨ SỬA: Khởi tạo state từ sessionStorage để nhớ quán đang chọn
+  const [selectedLocationId, setSelectedLocationId] = useState(() => {
+    return sessionStorage.getItem('admin_menu_selected_location_id') || '';
+  });
+
   const [menuItems, setMenuItems] = useState([]);
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
 
@@ -239,6 +227,13 @@ const LocationMenuPanel = () => {
   const [selectedBaseDish, setSelectedBaseDish] = useState(null); 
   const [price, setPrice] = useState('');
   const [customName, setCustomName] = useState('');
+
+  // ✨ SỬA: Lưu lại ID quán mỗi khi thay đổi
+  useEffect(() => {
+    if (selectedLocationId) {
+        sessionStorage.setItem('admin_menu_selected_location_id', selectedLocationId);
+    }
+  }, [selectedLocationId]);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -298,6 +293,7 @@ const LocationMenuPanel = () => {
         });
         alert("Thêm món thành công!");
         setSearchKeyword(''); setSelectedBaseDish(null); setPrice('');
+        // Reload menu
         const res = await API.get(`/locations/${selectedLocationId}/menu`);
         setMenuItems(res.data.data);
     } catch (err) {
@@ -320,7 +316,6 @@ const LocationMenuPanel = () => {
             🏠 Chọn địa điểm để quản lý thực đơn:
         </label>
         
-        {/* ✨ THANH CHỌN QUÁN ĐẸP HƠN ✨ */}
         <div className="location-select-wrapper">
             <select 
                 className="location-select"
