@@ -3,24 +3,25 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import useGeolocation from '../hooks/useGeolocation';
 import { calculateDistance } from '../utils/distance';
-import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa'; // ✨ MỚI: Import Icon
+import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa'; 
 import './LocationListPage.css';
 
 // Cấu hình API URL
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Hàm helper chọn màu nền ngẫu nhiên dựa trên tên quán
+// Hàm helper: Tạo màu gradient ngẫu nhiên (Đồng bộ style với DishRecommendation)
 const getPlaceholderStyle = (name) => {
   const gradients = [
-    'linear-gradient(135deg, #FF6B6B, #EE5253)', // Đỏ cam
-    'linear-gradient(135deg, #48DBFB, #0ABDE3)', // Xanh dương
-    'linear-gradient(135deg, #1DD1A1, #10AC84)', // Xanh lá
-    'linear-gradient(135deg, #FF9F43, #EE5A24)', // Cam
-    'linear-gradient(135deg, #5F27CD, #341F97)', // Tím
-    'linear-gradient(135deg, #ff9a9e, #fad0c4)', // Hồng phấn
+    'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Hồng phấn
+    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', // Tím mộng mơ
+    'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', // Xanh mint
+    'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)', // Xanh tím
+    'linear-gradient(120deg, #f093fb 0%, #f5576c 100%)', // Đỏ hồng
+    'linear-gradient(120deg, #f6d365 0%, #fda085 100%)', // Cam vàng
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Tím đậm
+    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'  // Hồng đào
   ];
   
-  // Tính hash đơn giản từ tên để chọn màu cố định cho mỗi tên
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -35,18 +36,17 @@ const LocationListPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // ✨ MỚI: State cho tìm kiếm
+  // State tìm kiếm
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- PHÂN TRANG ---
+  // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12; 
 
-  // Lấy vị trí người dùng
   const userLocation = useGeolocation();
   const navigate = useNavigate();
 
-  // ✨ MỚI: Hàm tải dữ liệu mặc định (Quán gần đây) - Tách ra để tái sử dụng
+  // Hàm tải dữ liệu quán gần đây
   const fetchDefaultLocations = async () => {
     if (!userLocation.loaded || userLocation.error) return;
 
@@ -61,7 +61,7 @@ const LocationListPage = () => {
 
       if (response.data.success) {
         setLocations(response.data.data);
-        setCurrentPage(1); // Reset về trang 1 khi load dữ liệu mới
+        setCurrentPage(1);
       } else {
         setError("Không tải được dữ liệu.");
       }
@@ -73,7 +73,6 @@ const LocationListPage = () => {
     }
   };
 
-  // useEffect ban đầu: Chỉ chạy khi có tọa độ (Load lần đầu)
   useEffect(() => {
     if (!userLocation.loaded) return;
 
@@ -83,17 +82,13 @@ const LocationListPage = () => {
       return;
     }
 
-    // Gọi hàm load mặc định
     fetchDefaultLocations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLocation.loaded, userLocation.error]);
+    // 👇 FIX: Thêm userLocation.coordinates vào dependency array để tránh warning và cập nhật khi vị trí thay đổi
+  }, [userLocation.loaded, userLocation.error, userLocation.coordinates]);
 
 
-  // ✨ MỚI: Hàm xử lý Tìm kiếm
   const handleSearch = async (e) => {
     e.preventDefault();
-    
-    // Nếu ô tìm kiếm trống -> Load lại quán gần đây (mặc định)
     if (!searchTerm.trim()) {
         fetchDefaultLocations(); 
         return;
@@ -103,10 +98,9 @@ const LocationListPage = () => {
     setError(null);
     try {
       const response = await axios.get(`${API_BASE}/locations/search?keyword=${searchTerm}`);
-      
       if (response.data.success) {
         setLocations(response.data.data);
-        setCurrentPage(1); // Quan trọng: Reset phân trang về 1
+        setCurrentPage(1); 
       }
     } catch (err) {
       console.error("Lỗi tìm kiếm:", err);
@@ -116,7 +110,7 @@ const LocationListPage = () => {
     }
   };
 
-  // --- LOGIC TÍNH TOÁN ITEM CHO TRANG HIỆN TẠI (GIỮ NGUYÊN) ---
+  // Logic phân trang
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLocations = locations.slice(indexOfFirstItem, indexOfLastItem);
@@ -148,12 +142,11 @@ const LocationListPage = () => {
         </button>
       </div>
 
-      {/* ✨ MỚI: THANH TÌM KIẾM (SEARCH BAR) */}
       <div className="search-container">
         <form onSubmit={handleSearch} className="search-box">
             <input 
                 type="text" 
-                placeholder="Bạn đang thèm gì? (VD: Phở, Cafe, Lẩu...)" 
+                placeholder="Bạn đang thèm gì? (VD: Phở, Cafe...)" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -164,53 +157,47 @@ const LocationListPage = () => {
       </div>
 
       {loading && <div className="loading-state">⏳ Đang xử lý...</div>}
-      
       {error && <div className="error-state">⚠️ {error}</div>}
 
-      {/* ✨ CẬP NHẬT: Empty State xử lý cả trường hợp Search không ra kết quả */}
       {!loading && !error && locations.length === 0 && (
         <div className="empty-state">
           <p>Không tìm thấy địa điểm nào {searchTerm ? `cho từ khóa "${searchTerm}"` : 'trong bán kính 5km'}.</p>
           <button className="retry-btn" onClick={() => {
               setSearchTerm(''); 
-              fetchDefaultLocations(); // Nút thử lại sẽ xóa search và load lại nearby
+              fetchDefaultLocations(); 
           }}>
               {searchTerm ? 'Xem tất cả' : 'Thử lại'}
           </button>
         </div>
       )}
 
-      {/* Grid hiển thị (GIỮ NGUYÊN) */}
       <div className="locations-grid">
         {currentLocations.map((loc) => (
           <div key={loc.id} className="location-card" onClick={() => navigate(`/locations/${loc.id}`)}>
             <div className="card-image">
-              {/* 👇 LOGIC HIỂN THỊ ẢNH HOẶC CHỮ CÁI ĐẦU */}
+              {/* Logic hiển thị ảnh hoặc chữ cái đầu */}
               {loc.images && loc.images.length > 0 ? (
-                <img 
-                  src={loc.images[0].url} 
-                  alt={loc.name} 
-                  onError={(e) => {
-                    // Nếu ảnh lỗi link, ẩn ảnh đi để hiện placeholder bên dưới (nếu cấu trúc DOM cho phép)
-                    // Hoặc đơn giản là thay src bằng ảnh mặc định
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex'; // Hiển thị placeholder ẩn (nếu có)
-                  }}
-                />
+                <>
+                  <img 
+                    src={loc.images[0].url} 
+                    alt={loc.name} 
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextSibling && e.target.nextSibling.classList.contains('fallback')) {
+                        e.target.nextSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <div className="img-placeholder fallback" style={{...getPlaceholderStyle(loc.name), display: 'none'}}>
+                    {loc.name.charAt(0).toUpperCase()}
+                  </div>
+                </>
               ) : (
                 <div className="img-placeholder" style={getPlaceholderStyle(loc.name)}>
                   {loc.name.charAt(0).toUpperCase()}
                 </div>
               )}
               
-              {/* Fallback placeholder ẩn để hiện khi ảnh lỗi (Optional) */}
-              {loc.images && loc.images.length > 0 && (
-                 <div className="img-placeholder fallback" style={{...getPlaceholderStyle(loc.name), display: 'none'}}>
-                    {loc.name.charAt(0).toUpperCase()}
-                 </div>
-              )}
-
-              {/* Chỉ hiện khoảng cách nếu có tọa độ user */}
               {userLocation.loaded && !userLocation.error && (
                   <span className="distance-badge">{getDistance(loc)} km</span>
               )}
@@ -232,7 +219,6 @@ const LocationListPage = () => {
         ))}
       </div>
 
-      {/* --- PHÂN TRANG CONTROL --- */}
       {!loading && !error && locations.length > itemsPerPage && (
         <div className="pagination-controls">
           <button 
@@ -242,11 +228,9 @@ const LocationListPage = () => {
           >
             &laquo; Trước
           </button>
-          
           <span className="pagination-info">
             Trang <strong>{currentPage}</strong> / {totalPages}
           </span>
-          
           <button 
             className="pagination-btn" 
             disabled={currentPage === totalPages}
