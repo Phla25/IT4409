@@ -2,13 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MapContainer as LeafletMapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import API from './api'; 
-// 👇 Thay useGeolocation bằng useLocationContext để đồng bộ vị trí
 import { useLocationContext } from './context/LocationContext'; 
-// 👇 Import useTheme để đổi màu bản đồ
+// 👇 Import useTheme
 import { useTheme } from './context/ThemeContext';
 import SimulationController from './components/SimulationController';
 import { useAuth } from './context/AuthContext';
-import { calculateDistance } from './utils/distance'; // Import hàm calculateDistance
+import { calculateDistance } from './utils/distance';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -16,7 +15,7 @@ import ProposeLocationModal from './pages/ProposeLocationModal';
 import { FaPlusCircle, FaCrosshairs, FaCheck, FaTimes } from 'react-icons/fa';
 import './MapContainer.css'; 
 
-// --- FIX ICON LEAFLET (Giữ nguyên) ---
+// --- FIX ICON LEAFLET ---
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -44,9 +43,9 @@ const tempMarkerIcon = new L.Icon({
 });
 
 const hanoiPosition = [21.028511, 105.854199];
-const FIXED_RADIUS_KM = 2; // Khai báo hằng số bán kính cố định nếu dùng cho filter mặc định
+const FIXED_RADIUS_KM = 2; 
 
-// --- COMPONENT HELPER (Giữ nguyên) ---
+// --- COMPONENT HELPER ---
 const FitBoundsToRoute = ({ route }) => {
   const map = useMap();
   useEffect(() => {
@@ -66,7 +65,6 @@ const ChangeView = ({ center, zoom }) => {
     const rafId = requestAnimationFrame(() => {
       if (map.getContainer()) {
         try {
-          // Tắt animation để tránh lỗi crash khi unmount
           map.setView(center, zoom, { animate: false });
         } catch (e) {
           console.warn("Map update ignored:", e);
@@ -109,7 +107,6 @@ const MapContainer = () => {
   const [routeProfile, setRouteProfile] = useState(null); 
   const [isFetchingRoute, setIsFetchingRoute] = useState(false); 
 
-  // 👇 SỬ DỤNG CONTEXT: Lấy vị trí và hàm cập nhật giả lập từ Global State
   const { location: userLocation, setSimulatedLocation } = useLocationContext();
 
   const [isAddingMode, setIsAddingMode] = useState(false); 
@@ -118,7 +115,6 @@ const MapContainer = () => {
 
   const [isDebugMode, setIsDebugMode] = useState(false);
 
-  // Logic xác định vị trí để hiển thị trên bản đồ
   const effectiveUserLocation = useMemo(() => {
     if (isAdminMode) {
       return { loaded: false, coordinates: { lat: null, lng: null }, error: null };
@@ -129,7 +125,6 @@ const MapContainer = () => {
   const [mapCenter, setMapCenter] = useState(hanoiPosition);
   const [mapZoom, setMapZoom] = useState(13);
 
-  // Debug Mode Key Listener
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.ctrlKey && event.shiftKey && (event.key === 'D' || event.key === 'd')) {
@@ -144,7 +139,6 @@ const MapContainer = () => {
     };
   }, []);
 
-  // Update Map View
   useEffect(() => {
     if (isAdminMode) {
       setMapCenter(hanoiPosition);
@@ -159,7 +153,6 @@ const MapContainer = () => {
     setIsAdminMode(isAdmin);
   }, [isAdmin]);
 
-  // Fetch locations
   const fetchLocations = useCallback(async () => {
     try {
       let url = ''; 
@@ -182,7 +175,6 @@ const MapContainer = () => {
     fetchLocations();
   }, [fetchLocations]);
 
-  // Routing Logic
   const getDirections = async (start, end, profile = 'driving-car') => {
     const ORS_API_KEY = 'YOUR_OPENROUTESERVICE_API_KEY'; 
 
@@ -242,12 +234,10 @@ const MapContainer = () => {
   const handleUserMarkerDrag = (e) => {
     if ((!isAdminMode && isDebugMode) || (isAdmin && !isAdminMode)) {
         const newLatLng = e.target.getLatLng();
-        // 👇 Gọi hàm setSimulatedLocation từ Context
         setSimulatedLocation({ lat: newLatLng.lat, lng: newLatLng.lng });
     }
   };
 
-  // Add Mode Functions
   const toggleAddMode = () => {
     const newState = !isAddingMode;
     setIsAddingMode(newState);
@@ -296,7 +286,6 @@ const MapContainer = () => {
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
 
-      {/* CONTROLS */}
       {!isAdminMode && (
           <div className="contribute-controls">
             <button 
@@ -318,12 +307,11 @@ const MapContainer = () => {
           <div className="add-mode-instruction">👇 Chạm vào bản đồ để chọn vị trí quán</div>
       )}
 
-      {/* SIMULATION CONTROLLER (Sử dụng Context) */}
       {isDebugMode && !isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
         <>
             <SimulationController
               initialPosition={effectiveUserLocation.coordinates}
-              onPositionChange={setSimulatedLocation} // Cập nhật vào Context
+              onPositionChange={setSimulatedLocation}
             />
             <div style={{
                 position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
@@ -335,7 +323,6 @@ const MapContainer = () => {
         </>
       )}
 
-      {/* Route Summary */}
       {route && (
         <div className="route-summary-panel">
           {routeSummary && (
@@ -375,10 +362,17 @@ const MapContainer = () => {
         </div>
       )}
 
-      {/* MAP */}
-      <LeafletMapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+      {/* ✨ KEY: Thêm theme vào key để buộc Map render lại khi đổi chế độ */}
+      <LeafletMapContainer 
+        key={`${isAdminMode ? "admin-map" : "user-map"}-${theme}`} 
+        center={mapCenter} 
+        zoom={mapZoom} 
+        style={{ height: '100%', width: '100%' }} 
+        scrollWheelZoom={true}
+      >
         
-        {/* ✨ VẪN DÙNG GOOGLE MAPS, NHƯNG THÊM CLASS ĐỂ ĐỔI MÀU ✨ */}
+        {/* ✨ FIX: LUÔN DÙNG GOOGLE MAPS ✨ */}
+        {/* Chúng ta sẽ dùng CSS Filter để làm tối nó khi ở chế độ Dark */}
         <TileLayer 
           url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
           attribution="Google Maps"
