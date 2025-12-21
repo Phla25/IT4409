@@ -707,6 +707,7 @@ input:checked + .slider:before { transform: translateX(22px); }
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 0.85rem;
+  appearance: textfield; /* Standard property */
   -moz-appearance: textfield; /* Tắt mũi tên tăng/giảm trên Firefox */
 }
 
@@ -752,6 +753,7 @@ input:checked + .slider:before { transform: translateX(22px); }
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 0.85rem;
+  appearance: textfield; /* Standard property */
   -moz-appearance: textfield; /* Tắt mũi tên tăng/giảm trên Firefox */
 }
 
