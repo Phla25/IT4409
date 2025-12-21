@@ -35,6 +35,7 @@ const DishRecommendationPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Chỉ gọi API khi đã có vị trí
     if (userLocation.loaded && !userLocation.error) {
       fetchDishes();
     } else if (userLocation.error) {
@@ -57,6 +58,7 @@ const DishRecommendationPage = () => {
     }
   };
 
+  // Xử lý tiêu đề dựa trên thời tiết
   let title = "Gợi ý hôm nay";
   let subTitle = "Món ngon dành cho bạn";
   
@@ -76,6 +78,7 @@ const DishRecommendationPage = () => {
 
   return (
     <div className="dish-page-container">
+      {/* Header của trang */}
       <div className="dish-page-header">
         <button className="back-btn" onClick={() => navigate('/')}>
           ← Quay lại
@@ -86,12 +89,14 @@ const DishRecommendationPage = () => {
         </div>
       </div>
 
+      {/* Trạng thái Loading / Lỗi */}
       {loading && <div className="page-loading">⏳ Đang phân tích thời tiết...</div>}
       
       {!loading && userLocation.error && (
         <div className="page-error">⚠️ Không thể xác định vị trí để gợi ý món ăn.</div>
       )}
 
+      {/* Grid danh sách món ăn */}
       {recommendations && (
         <div className="dish-grid">
           {recommendations.data.map((dish) => (
@@ -108,12 +113,12 @@ const DishRecommendationPage = () => {
                       src={dish.dish_image} 
                       alt={dish.dish_name} 
                       onError={(e) => {
-                         // Nếu ảnh lỗi, ẩn ảnh đi và hiện placeholder kế tiếp
+                         // Nếu ảnh lỗi, ẩn ảnh đi và hiện placeholder kế tiếp (fallback)
                          e.target.style.display = 'none';
-                         e.target.nextSibling.style.display = 'flex';
+                         if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
                       }}
                     />
-                    {/* Placeholder ẩn (Fallback) dùng khi ảnh lỗi */}
+                    {/* Fallback placeholder (ẩn mặc định, hiện khi img lỗi) */}
                     <div className="dish-placeholder fallback" style={{...getPlaceholderStyle(dish.dish_name), display: 'none'}}>
                       {dish.dish_name.charAt(0).toUpperCase()}
                     </div>

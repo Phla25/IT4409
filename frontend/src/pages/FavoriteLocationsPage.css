@@ -1,16 +1,23 @@
 /* FavoriteLocationsPage.css - Giao diện Hiện đại */
 
 .favorites-page-container {
-    max-width: 1200px;
-    margin: 0 auto;
+    /* Xóa max-width ở container cha để nền phủ kín màn hình */
+    width: 100%;
+    min-height: 100vh; /* Đổi từ 80vh -> 100vh */
     padding: 30px 20px;
-    min-height: 80vh;
     background-color: #f9fbfd; /* Màu nền sáng nhẹ */
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
 }
 
 .fav-header {
     text-align: center;
     margin-bottom: 50px;
+    
+    /* Căn giữa nội dung Header */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .fav-header h2 {
@@ -31,6 +38,11 @@
     /* Card rộng tối thiểu 300px để chứa nội dung thoải mái hơn */
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
     gap: 30px;
+
+    /* Căn giữa nội dung Grid */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* --- CARD DESIGN --- */
@@ -180,6 +192,33 @@
     margin: 25px 0;
 }
 
+/* --- LOADING STATE (Mới) --- */
+.fav-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    color: #7f8c8d;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 20px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+
 /* Nút Khám phá ngay - Style mới: Gradient hiện đại */
 .btn-explore {
     /* Gradient từ xanh dương sang tím */
@@ -257,4 +296,77 @@
         padding: 6px 12px; /* Nút nhỏ hơn chút trên mobile */
         font-size: 0.85rem;
     }
+}
+
+/* =========================================
+   🌙 DARK MODE SUPPORT 🌙
+   ========================================= */
+body.dark-mode .favorites-page-container {
+    background-color: #1e1f24; /* Nền trang tối phủ kín */
+}
+
+body.dark-mode .fav-header h2 {
+    color: #f9fafb; /* Chữ tiêu đề sáng */
+}
+
+body.dark-mode .fav-header p {
+    color: #9ca3af; /* Chữ phụ xám nhạt */
+}
+
+body.dark-mode .fav-card {
+    background-color: #2a2d33; /* Nền card tối */
+    border-color: #374151; /* Viền card tối */
+}
+
+body.dark-mode .fav-title {
+    color: #f9fafb; /* Tên quán sáng */
+}
+
+body.dark-mode .fav-address {
+    color: #9ca3af; /* Địa chỉ xám */
+}
+
+body.dark-mode .fav-footer {
+    border-top-color: #374151;
+}
+
+body.dark-mode .fav-rating {
+    color: #f9fafb;
+}
+
+body.dark-mode .fav-count {
+    color: #6b7280;
+}
+
+body.dark-mode .fav-badge {
+    background: rgba(42, 45, 51, 0.9); /* Nền badge tối */
+    color: #f9fafb;
+}
+
+body.dark-mode .fav-empty {
+    background-color: #2a2d33;
+    box-shadow: none;
+}
+
+body.dark-mode .fav-empty p {
+    color: #9ca3af;
+}
+
+body.dark-mode .btn-remove-fav {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+body.dark-mode .btn-remove-fav:hover {
+    background-color: #ef4444;
+    color: white;
+}
+
+body.dark-mode .fav-loading {
+    color: #9ca3af;
+}
+
+body.dark-mode .spinner {
+    border-color: #374151;
+    border-top-color: #3b82f6;
 }

@@ -1,9 +1,10 @@
 .dish-page-container {
   padding: 30px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  min-height: 80vh;
+  /* Xóa max-width ở container cha để nền phủ kín màn hình */
+  width: 100%; 
+  min-height: 100vh;
   background-color: var(--bg-color, #f9fafb);
+  box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
 }
 
 .dish-page-header {
@@ -15,6 +16,12 @@
   padding: 20px;
   border-radius: 16px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+  /* Căn giữa nội dung Header */
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .header-content h2 {
@@ -52,6 +59,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
+
+  /* Căn giữa nội dung Grid */
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* --- CARD STYLE (Lớn hơn widget) --- */
@@ -167,10 +180,25 @@
   padding: 50px;
   font-size: 1.2rem;
   color: #666;
+  
+  /* Căn giữa thông báo loading/error */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Dark Mode Support */
 body.dark-mode .dish-page-container { background-color: #1e1f24; }
 body.dark-mode .dish-page-header { background-color: #2a2d33; }
+body.dark-mode .header-content p { color: #aaa; } /* Chữ phụ sáng hơn chút */
 body.dark-mode .dish-card-large { background-color: #2a2d33; border-color: #444; }
 body.dark-mode .dish-card-body h3 { color: white; }
+
+/* FIX: Nút Back nổi bật hơn trong chế độ tối */
+body.dark-mode .back-btn {
+  background: rgba(255, 255, 255, 0.15); /* Nền sáng mờ */
+  color: #fff; /* Chữ trắng */
+}
+body.dark-mode .back-btn:hover {
+  background: #e74c3c; /* Hover vẫn đỏ */
+}

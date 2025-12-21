@@ -1,10 +1,15 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+// 👇 Import Theme Context và Icon
+import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
-import { FaBell } from 'react-icons/fa'; // Icon cái chuông
+import { FaBell, FaSun, FaMoon } from 'react-icons/fa';
 
 export default function Header({ onToggleSidebar, onOpenAuth, pendingCount }) {
   const { user, logout, userRole } = useAuth();
+  // 👇 Lấy theme và hàm toggle
+  const { theme, toggleTheme } = useTheme();
+  
   const isAdmin = userRole === 'admin';
 
   return (
@@ -17,6 +22,28 @@ export default function Header({ onToggleSidebar, onOpenAuth, pendingCount }) {
 
       <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         
+        {/* ✨ NÚT CHUYỂN THEME */}
+        <button 
+            onClick={toggleTheme}
+            style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: '1px solid rgba(255,255,255,0.4)',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '1.1rem',
+                transition: 'all 0.2s'
+            }}
+            title={theme === 'light' ? 'Chuyển chế độ tối' : 'Chuyển chế độ sáng'}
+        >
+            {theme === 'light' ? <FaMoon /> : <FaSun />}
+        </button>
+
         {/* 2. CHUÔNG THÔNG BÁO (Chỉ hiện cho Admin) */}
         {user && isAdmin && (
           <Link 
@@ -25,7 +52,7 @@ export default function Header({ onToggleSidebar, onOpenAuth, pendingCount }) {
             style={{ 
               position: 'relative', 
               color: 'white', 
-              fontSize: '1.4rem', // Chuông to rõ
+              fontSize: '1.4rem', 
               display: 'flex', 
               alignItems: 'center',
               textDecoration: 'none',
@@ -33,14 +60,12 @@ export default function Header({ onToggleSidebar, onOpenAuth, pendingCount }) {
             }}
           >
             <FaBell />
-            
-            {/* Số đỏ tròn nằm ngay góc chuông */}
             {pendingCount > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-5px',
                 right: '-6px',
-                backgroundColor: '#e74c3c', // Màu đỏ nổi bật
+                backgroundColor: '#e74c3c',
                 color: 'white',
                 fontSize: '0.7rem',
                 fontWeight: 'bold',
@@ -49,8 +74,8 @@ export default function Header({ onToggleSidebar, onOpenAuth, pendingCount }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '50%', // Tròn xoe
-                border: '2px solid #c0392b', // Viền đỏ đậm để tách nền
+                borderRadius: '50%',
+                border: '2px solid #c0392b',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {pendingCount}
@@ -59,8 +84,8 @@ export default function Header({ onToggleSidebar, onOpenAuth, pendingCount }) {
           </Link>
         )}
 
-        {/* Vạch ngăn cách giữa chuông và user */}
-        {user && isAdmin && <div style={{ width: '1px', height: '25px', background: 'rgba(255,255,255,0.3)' }}></div>}
+        {/* Vạch ngăn cách */}
+        <div style={{ width: '1px', height: '25px', background: 'rgba(255,255,255,0.3)' }}></div>
 
         {/* 3. Khu vực User */}
         {user ? (

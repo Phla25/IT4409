@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -16,9 +16,12 @@ import AdminMenuManager from './pages/AdminMenuManager';
 import { AuthProvider, useAuth } from './context/AuthContext';
 // 👇 1. Import LocationProvider (Bắt buộc để MapContainer hoạt động)
 import { LocationProvider } from './context/LocationContext';
+// 👇 2. Import ThemeProvider (Bắt buộc để Header hoạt động nút chuyển theme)
+import { ThemeProvider } from './context/ThemeContext';
 
 // 👇 Import Page Gợi ý Món ăn (Mới)
 import DishRecommendationPage from './pages/DishRecommendationPage';
+import AuthModal from './pages/AuthModal';
 
 // --- TRANG BÁO LỖI QUYỀN (Component nhỏ nội bộ) ---
 function UnauthorizedPage() {
@@ -69,7 +72,7 @@ function AppRoutes() {
         />
         
         <Route 
-          path="/admin/menu-manager" 
+          path="admin/menu-manager" 
           element={
             <ProtectedRoute requiredRole="admin">
               <AdminMenuManager />
@@ -90,10 +93,12 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        {/* 👇 2. Bọc LocationProvider vào đây để MapContainer và các trang khác có thể dùng */}
-        <LocationProvider>
-           <AppRoutes />
-        </LocationProvider>
+        {/* 👇 3. Bọc ThemeProvider và LocationProvider vào đây */}
+        <ThemeProvider>
+          <LocationProvider>
+             <AppRoutes />
+          </LocationProvider>
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );
