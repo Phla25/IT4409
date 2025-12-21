@@ -42,7 +42,7 @@ function AppRoutes() {
       <Route path="/" element={<MainLayout />}>
         {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
-        
+        <Route path="recommendations" element={<DishRecommendationPage />} />
         {/* Route cho trang danh sách địa điểm gần đây */}
         <Route path="nearby" element={<LocationListPage />} />
         {/* Route cho trang danh sách địa điểm yêu thích */}
