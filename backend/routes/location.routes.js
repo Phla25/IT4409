@@ -56,7 +56,22 @@ router.post(
 router.post(
   '/:id/images',
   authMiddleware.verifyToken,
-  uploadCloud.array('images', 10), 
+  (req, res, next) => {
+      // Middleware debug để bắt lỗi của uploadCloud
+      uploadCloud.array('images', 10)(req, res, (err) => {
+          if (err) {
+              console.error("🔥 LỖI UPLOAD (MIDDLEWARE):", err);
+              // Trả lỗi chi tiết về frontend để bạn xem
+              return res.status(500).json({ 
+                  success: false, 
+                  message: "Lỗi Upload ảnh: " + (err.message || err), 
+                  error_detail: err 
+              });
+          }
+          // Nếu không lỗi thì đi tiếp vào Controller
+          next();
+      });
+  },
   locationController.addImagesToLocation
 );
 
@@ -72,7 +87,12 @@ router.put(
   [authMiddleware.verifyToken, authMiddleware.isAdmin], 
   locationController.updateLocation
 );
-
+// ROUTE XÓA ẢNH (Chỉ Admin mới được xóa)
+router.delete(
+  '/images/:imageId', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.deleteLocationImage
+);
 // Xóa địa điểm 
 router.delete(
   '/:id', 

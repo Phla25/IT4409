@@ -56,17 +56,18 @@ exports.getLocationById = async (req, res) => {
              return res.status(404).json({ message: "Địa điểm chưa được duyệt." });
         }
 
-        // 2. 👇 LẤY THÊM DANH SÁCH ẢNH TỪ BẢNG LocationImages
+        // 2. 👇 SỬA ĐOẠN NÀY: Thêm "id," vào câu lệnh SELECT
+        // Và nhớ dùng tên bảng "locationimages" (viết thường) cho khớp với DB của bạn
         const imageSql = `
-            SELECT image_url as url, description, is_main, uploaded_at 
-            FROM LocationImages 
+            SELECT id, image_url as url, description, is_main, uploaded_at 
+            FROM locationimages 
             WHERE location_id = $1 
             ORDER BY is_main DESC, uploaded_at DESC
         `;
         const imagesResult = await db.query(imageSql, [locationId]);
         
         // Gán vào object trả về
-        location.gallery = imagesResult.rows; 
+        location.images = imagesResult.rows; // Đổi tên field thành images cho khớp Frontend mới
 
         res.status(200).json({ success: true, data: location });
     } catch (error) {
@@ -130,30 +131,147 @@ exports.createLocation = async (req, res) => {
 };
 
 // 👇 [API MỚI] Thêm ảnh vào địa điểm có sẵn
+// 👇 HÀM DEBUG CHI TIẾT (Thay thế hàm cũ)
 exports.addImagesToLocation = async (req, res) => {
+    const { id } = req.params;
+    console.log(`\n🔍 [DEBUG] Bắt đầu upload ảnh cho Location ID: ${id}`);
+
+    // 1. KIỂM TRA BIẾN DB
+    if (!db || typeof db.query !== 'function') {
+        console.error("❌ LỖI CONFIG: Biến 'db' không có hàm query(). Kiểm tra file db.config.js!");
+        // Nếu db sai, trả lỗi ngay
+        return res.status(500).json({ 
+            message: "Lỗi cấu hình Database Backend", 
+            detail: "db.query is not a function. Check db.config.js exports." 
+        });
+    }
+
     try {
-        const { id } = req.params;
+        // 2. KIỂM TRA FILE GỬI LÊN
         const files = req.files || [];
+        console.log(`📂 Số lượng file nhận được: ${files.length}`);
+        
+        if (files.length === 0) {
+            return res.status(400).json({ message: "Chưa chọn ảnh nào (req.files rỗng)!" });
+        }
+        
+        // Log thử file đầu tiên xem cấu trúc
+        console.log("📝 Info file đầu tiên:", JSON.stringify(files[0], null, 2));
 
-        if (files.length === 0) return res.status(400).json({ message: "Chưa chọn ảnh." });
-
-        // Check xem đã có ảnh bìa chưa
-        const checkMain = await db.query(`SELECT id FROM LocationImages WHERE location_id = $1 AND is_main = true`, [id]);
-        let needMain = (checkMain.rows.length === 0);
-
-        for (let i = 0; i < files.length; i++) {
-            const isMain = (needMain && i === 0);
-            await db.query(
-                `INSERT INTO LocationImages (location_id, image_url, description, is_main, uploaded_at) 
-                 VALUES ($1, $2, $3, $4, NOW())`,
-                [id, files[i].path, `Ảnh thêm mới`, isMain]
-            );
+        // 3. KIỂM TRA KẾT NỐI DB & TỒN TẠI BẢNG
+        // Thử query nhẹ 1 cái để xem DB sống không
+        try {
+            // Dùng tên bảng 'locationimages' (viết thường) như trong ảnh bạn gửi
+            await db.query('SELECT 1 FROM locationimages LIMIT 1'); 
+            console.log("✅ Kết nối DB OK. Bảng 'locationimages' tồn tại.");
+        } catch (dbErr) {
+            console.error("❌ Lỗi kết nối DB hoặc không tìm thấy bảng:", dbErr.message);
+            // Thử fallback sang tên bảng có ngoặc kép nếu bảng thường không thấy
+            try {
+                console.log("⚠️ Thử tìm bảng \"LocationImages\" (có ngoặc kép)...");
+                await db.query('SELECT 1 FROM "LocationImages" LIMIT 1');
+                console.log("✅ Tìm thấy bảng \"LocationImages\"!");
+            } catch (e2) {
+                throw new Error(`Không tìm thấy bảng ảnh nào cả! Lỗi gốc: ${dbErr.message}`);
+            }
         }
 
-        res.status(200).json({ success: true, message: `Đã thêm ${files.length} ảnh.` });
+        // 4. KIỂM TRA ĐỊA ĐIỂM CÓ TỒN TẠI KHÔNG
+        // Dùng bảng 'locations' (viết thường) hoặc 'Locations'
+        const checkLoc = await db.query(`SELECT id FROM locations WHERE id = $1`, [id]);
+        if (checkLoc.rows.length === 0) {
+            console.error(`❌ Không tìm thấy địa điểm ID ${id}`);
+            return res.status(404).json({ message: `Địa điểm ID ${id} không tồn tại.` });
+        }
+
+        // 5. KIỂM TRA ẢNH BÌA
+        const checkMain = await db.query(
+            `SELECT id FROM locationimages WHERE location_id = $1 AND is_main = true`, 
+            [id]
+        );
+        let needMain = (checkMain.rows.length === 0);
+
+        // 6. THỰC HIỆN LƯU VÀO DB
+        let successCount = 0;
+        for (const file of files) {
+            const isMain = needMain;
+            if (needMain) needMain = false; // Chỉ cái đầu tiên làm main
+
+            // Lấy link ảnh (Cloudinary trả về path hoặc secure_url)
+            const imageUrl = file.path || file.secure_url;
+            
+            if (!imageUrl) {
+                console.warn("⚠️ File không có đường dẫn ảnh, bỏ qua:", file);
+                continue;
+            }
+
+            console.log(`💾 Đang lưu vào DB: ${imageUrl} (Main: ${isMain})`);
+
+            // INSERT vào bảng locationimages (viết thường)
+            await db.query(
+                `INSERT INTO locationimages (location_id, image_url, description, is_main, uploaded_at) 
+                 VALUES ($1, $2, $3, $4, NOW())`,
+                [id, imageUrl, 'Ảnh thêm mới', isMain]
+            );
+            successCount++;
+        }
+
+        console.log(`🎉 [THÀNH CÔNG] Đã lưu ${successCount} ảnh.`);
+        res.status(200).json({ success: true, message: `Đã thêm ${successCount} ảnh thành công.` });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Lỗi thêm ảnh." });
+        // IN LỖI CHI TIẾT RA TERMINAL
+        console.error("🔥 LỖI SERVER CRITICAL:", error);
+        
+        // Trả về Frontend để bạn đọc được lỗi
+        res.status(500).json({ 
+            message: "Lỗi Server khi xử lý ảnh", 
+            error_name: error.name,
+            error_message: error.message,
+            error_stack: error.stack
+        });
+    }
+};
+// [ADMIN] Xóa 1 ảnh cụ thể
+exports.deleteLocationImage = async (req, res) => {
+    try {
+        const { imageId } = req.params;
+        // Xóa khỏi Database (Dùng tên bảng viết thường 'locationimages')
+        const result = await db.query('DELETE FROM locationimages WHERE id = $1 RETURNING id', [imageId]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Ảnh không tồn tại." });
+        }
+        res.status(200).json({ success: true, message: "Đã xóa ảnh thành công." });
+    } catch (error) {
+        console.error("Delete Image Error:", error);
+        res.status(500).json({ message: "Lỗi server khi xóa ảnh." });
+    }
+};
+// 👇 BỔ SUNG HÀM NÀY (Đang bị thiếu gây lỗi server)
+exports.batchCreateLocations = async (req, res) => {
+    try {
+        const { locations } = req.body;
+        if (!Array.isArray(locations)) {
+            return res.status(400).json({ message: "Dữ liệu không hợp lệ (phải là mảng)." });
+        }
+
+        let savedCount = 0;
+        for (const loc of locations) {
+            // Tạo từng địa điểm từ file Excel
+            await Location.create({
+                ...loc,
+                created_by_user_id: req.user.id,
+                is_approved: true, // Import Excel thường là Admin nên duyệt luôn
+                created_at: new Date()
+            });
+            savedCount++;
+        }
+
+        res.status(200).json({ success: true, message: `Đã import thành công ${savedCount} địa điểm!` });
+    } catch (error) {
+        console.error("Batch Create Error:", error);
+        res.status(500).json({ message: "Lỗi khi import dữ liệu." });
     }
 };
 

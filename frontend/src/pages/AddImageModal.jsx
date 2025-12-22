@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaCloudUploadAlt, FaTimes, FaTrash } from 'react-icons/fa';
-import API from '../services/api'; // Hoặc đường dẫn tới file api.js của bạn
+import API from '../api'; // Hoặc đường dẫn tới file api.js của bạn
 import './AddImageModal.css';
 
 const AddImageModal = ({ locationId, onClose, onSuccess }) => {
