@@ -187,3 +187,19 @@ body.dark-mode .popup-directions-button {
     filter: invert(100%) hue-rotate(180deg) !important; 
     /* Đảo ngược lại lần nữa để về màu chuẩn */
 }
+@media (max-width: 768px) {
+    /* Đẩy Radius Filter xuống một chút hoặc sang trái để không che nút khác */
+    .radius-filter-panel {
+        top: 10px;
+        right: 10px;
+        left: 10px; /* Full chiều ngang */
+        width: auto; /* Tự động theo left/right */
+        flex-direction: row; /* Xếp ngang cho gọn */
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .radius-input-container input[type="number"] {
+        width: 50px;
+    }
+}

@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const locationController = require('../controllers/location.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
-
+const uploadCloud = require('../config/cloudinary.config');
 // --- 1. CÁC ROUTE TĨNH (STATIC ROUTES) ---
 // (Đặt các route cụ thể lên đầu)
 
@@ -44,6 +44,20 @@ router.get(
   '/admin/pending-count', 
   [authMiddleware.verifyToken, authMiddleware.isAdmin], 
   locationController.getPendingCount
+);
+router.post(
+  '/', 
+  authMiddleware.verifyToken, // (Nếu có)
+  uploadCloud.array('images', 10), // 📸 Cho phép up tối đa 10 ảnh, tên field là 'images'
+  locationController.createLocation
+);
+
+// 2. Route Thêm ảnh vào địa điểm cũ (API mới)
+router.post(
+  '/:id/images',
+  authMiddleware.verifyToken,
+  uploadCloud.array('images', 10), 
+  locationController.addImagesToLocation
 );
 
 // --- 2. CÁC ROUTE ĐỘNG (DYNAMIC ROUTES) ---
