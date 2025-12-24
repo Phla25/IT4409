@@ -6,7 +6,6 @@ import useGeolocation from '../hooks/useGeolocation';
 import { calculateDistance } from '../utils/distance';
 import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa'; 
 import './LocationListPage.css';
-import API from '../api';
 
 // Cấu hình API URL
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
