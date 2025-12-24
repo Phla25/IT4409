@@ -257,3 +257,4 @@ const LocationListPage = () => {
     </div>
   );
 }
+export default LocationListPage;
