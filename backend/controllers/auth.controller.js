@@ -5,7 +5,46 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // ✅ [MỚI]
 
 // --- ĐĂNG KÝ (Giữ nguyên logic cũ, chỉ paste đè hàm Login) ---
-exports.register = async (req, res) => { /* ...code cũ của bạn... */ };
+exports.register = async (req, res) => {
+  const { username, email, password } = req.body;
+
+  // 1. Kiểm tra dữ liệu đầu vào
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Vui lòng nhập đầy đủ tên, email và mật khẩu." });
+  }
+
+  try {
+    // 2. Kiểm tra Email đã tồn tại chưa (Trong bảng Users)
+    const userExist = await db.query('SELECT id FROM Users WHERE email = $1', [email]);
+    if (userExist.rows.length > 0) {
+      return res.status(400).json({ message: "Email này đã được sử dụng." });
+    }
+
+    // 3. Mã hóa mật khẩu
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // 4. Lưu vào Database
+    // ⚠️ LƯU Ý: Mình dùng cột 'password_hash' để khớp với hàm login của bạn
+    // Role mặc định là 'user'
+    const newUser = await db.query(
+      `INSERT INTO Users (username, email, password_hash, role, created_at)
+       VALUES ($1, $2, $3, 'user', NOW())
+       RETURNING id, username, email`,
+      [username, email, passwordHash]
+    );
+
+    // 5. Trả về thành công
+    res.status(201).json({ 
+        success: true, 
+        message: "Đăng ký thành công! Bạn có thể đăng nhập ngay." 
+    });
+
+  } catch (error) {
+    console.error("Register Error:", error);
+    res.status(500).json({ message: "Lỗi server khi đăng ký." });
+  }
+};
 
 // --- ĐĂNG NHẬP (USER) ---
 exports.login = async (req, res) => {
