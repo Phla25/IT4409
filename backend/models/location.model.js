@@ -1,50 +1,82 @@
-const db = require('../config/db.config.js');
+// backend/models/location.model.js
+
+// Import db từ file config (nơi bạn vừa thêm hàm query)
+const db = require('../config/db.config'); 
 
 class Location {
-  // [READ ALL] Lấy tất cả địa điểm đã duyệt (cho bản đồ)
+  
+  // [READ ALL] Lấy tất cả địa điểm đã duyệt
   static async getAllLocationsForMap() {
     const sql = `
       SELECT 
         id, name, description, address, district, 
         latitude, longitude, phone_number, 
         min_price, max_price, average_rating, review_count, is_approved
-      FROM Locations
+      FROM locations
       WHERE is_approved = TRUE;
+    `;
+    // Dùng db.query (của thư viện pg)
+    const result = await db.query(sql);
+    return result.rows; 
+  }
+
+  // [ADMIN READ ALL]
+  static async getAllForAdmin() {
+    const sql = `
+      SELECT 
+        l.id, l.name, l.description, l.address, l.district, 
+        l.latitude, l.longitude, l.phone_number, 
+        l.min_price, l.max_price, l.average_rating, l.review_count, 
+        l.is_approved, l.created_by_user_id,
+        u.username as created_by_username
+      FROM locations l
+      LEFT JOIN users u ON l.created_by_user_id = u.id
+      ORDER BY l.is_approved ASC;
     `;
     const result = await db.query(sql);
     return result.rows;
   }
 
-  // [READ NEARBY] Lấy địa điểm gần đó (Geospatial Query)
+  // ✨ [FIX LỖI HERE] Dùng db.query thay vì sequelize.query
   static async getNearby(userLat, userLng, radiusKm) {
     const radiusMiles = radiusKm / 1.60934; 
+    
+    // Lưu ý: Vẫn cần extension 'cube' và 'earthdistance' trong DB
     const sql = `
       SELECT 
         id, name, description, address, district, 
         latitude, longitude, phone_number, 
         min_price, max_price, average_rating, review_count, is_approved,
         (point($2, $1) <@> point(longitude, latitude)) * 1.60934 AS distance_km
-      FROM Locations
+      FROM locations
       WHERE is_approved = TRUE 
         AND (point($2, $1) <@> point(longitude, latitude)) <= $3 
       ORDER BY distance_km;
     `;
+
+    // Cú pháp của 'pg': db.query(sql, [params])
     const result = await db.query(sql, [userLat, userLng, radiusMiles]);
     return result.rows;
   }
+  // [NEW] Đếm số lượng địa điểm chờ duyệt
+  static async countPending() {
+    const sql = `SELECT COUNT(*) as count FROM locations WHERE is_approved = FALSE`;
+    const result = await db.query(sql);
+    return parseInt(result.rows[0].count);
+  }
 
   // [CRUD] CREATE
-  static async create({ name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id }) {
+  static async create({ name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id, is_approved}) {
     const sql = `
-      INSERT INTO Locations (
+      INSERT INTO locations (
         name, description, address, district, latitude, longitude, 
-        phone_number, min_price, max_price, created_by_user_id, is_approved
+        phone_number, min_price, max_price, created_by_user_id, is_approved, created_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
       RETURNING *;
     `;
-    const params = [name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id];
-    const result = await db.query(sql, params);
+    
+    const result = await db.query(sql, [name, description, address, district, latitude, longitude, phone_number, min_price, max_price, created_by_user_id, is_approved]);
     return result.rows[0];
   }
 
@@ -55,7 +87,7 @@ class Location {
         id, name, description, address, district, 
         latitude, longitude, phone_number, 
         min_price, max_price, average_rating, review_count, is_approved
-      FROM Locations 
+      FROM locations 
       WHERE id = $1;
     `;
     const result = await db.query(sql, [id]);
@@ -83,26 +115,27 @@ class Location {
     values.push(id);
 
     const sql = `
-      UPDATE Locations 
-      SET ${fields.join(', ')} 
+      UPDATE locations 
+      SET ${fields.join(', ')}
       WHERE id = $${paramIndex} 
       RETURNING *;
     `;
+    
     const result = await db.query(sql, values);
     return result.rows[0];
   }
 
   // [CRUD] DELETE
   static async delete(id) {
-    const sql = 'DELETE FROM Locations WHERE id = $1 RETURNING id;';
+    const sql = 'DELETE FROM locations WHERE id = $1 RETURNING id;';
     const result = await db.query(sql, [id]);
     return result.rows[0];
   }
 
-  // [CRUD] Thêm hàng loạt địa điểm (cho import Excel)
+  // [CRUD] Bulk Create (Giữ nguyên logic SQL raw cho an toàn với pg)
   static async bulkCreate(locations = []) {
     if (!Array.isArray(locations) || locations.length === 0)
-      throw new Error("Danh sách địa điểm rỗng.");
+        throw new Error("Danh sách rỗng.");
 
     const values = [];
     const placeholders = [];
@@ -125,7 +158,7 @@ class Location {
     });
 
     const sql = `
-      INSERT INTO Locations (
+      INSERT INTO locations (
         name, description, address, district, latitude, longitude,
         phone_number, min_price, max_price, is_approved
       )
@@ -134,6 +167,41 @@ class Location {
     `;
 
     const result = await db.query(sql, values);
+    return result.rows;
+  }
+  static async search(keyword) {
+    if (!keyword) return [];
+
+    const searchTerm = `%${keyword}%`; // Thêm % để tìm kiếm gần đúng (Partial match)
+
+    // Lưu ý: Tên bảng trong SQL dưới đây mình để chữ thường (locations, categories...) 
+    // để khớp với DB PostgreSQL mặc định.
+    const sql = `
+      SELECT DISTINCT l.* FROM locations l
+      
+      -- Join bảng Danh mục (để tìm: "Quán Cafe", "Sân vườn"...)
+      LEFT JOIN locationcategories lc ON l.id = lc.location_id
+      LEFT JOIN categories c ON lc.category_id = c.id
+      
+      -- Join bảng Món ăn (để tìm: "Phở", "Trà sữa"...)
+      LEFT JOIN menuitems mi ON l.id = mi.location_id
+      LEFT JOIN basedishes bd ON mi.base_dish_id = bd.id
+      
+      WHERE l.is_approved = TRUE
+      AND (
+           l.name ILIKE $1          -- Tìm theo tên quán
+        OR l.address ILIKE $1       -- Tìm theo địa chỉ
+        OR l.district ILIKE $1      -- Tìm theo quận
+        OR c.name ILIKE $1          -- Tìm theo tên danh mục
+        OR bd.name ILIKE $1         -- Tìm theo tên món gốc
+        OR mi.custom_name ILIKE $1  -- Tìm theo tên món riêng tại quán
+      )
+      ORDER BY l.average_rating DESC
+      LIMIT 20;
+    `;
+    
+    // ILIKE là lệnh so sánh không phân biệt hoa thường của PostgreSQL
+    const result = await db.query(sql, [searchTerm]);
     return result.rows;
   }
 }
