@@ -2,22 +2,32 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function Sidebar({ isOpen, onCloseMobile }) {
+export default function Sidebar({ isOpen, onCloseMobile, pendingCount }) {
   const { userRole } = useAuth();
   const location = useLocation();
   console.log("Current User Role:", userRole);
   const menuItems = [
     { label: '🏠 Trang chủ', path: '/' },
-    { label: '📍 Tìm quanh đây', path: '/nearby' }, // Bạn có thể tách route này nếu muốn
   ];
 
+  if (userRole === 'user') {
+    // ✨ THÊM DÒNG NÀY: Dẫn tới trang Gợi ý món ăn
+    menuItems.push({ label: '✨ Gợi ý hôm nay', path: '/recommendations' });
+    menuItems.push({ label: '📍 Tìm quanh đây', path: '/nearby' });
+    menuItems.push({ label: '❤️ Yêu thích', path: '/favorites' });
+  }
+  
   if (userRole === 'admin') {
-    menuItems.push({ label: '⚙️ Quản lý địa điểm', path: '/admin' });
+    menuItems.push({ 
+        label: '⚙️ Quản lý địa điểm', 
+        path: '/admin',
+        hasBadge: true 
+    });
+    menuItems.push({ label: '🍽 Quản lý thực đơn', path: '/admin/menu-manager' });
   }
 
   return (
     <>
-      {/* Overlay đen mờ chỉ hiện ở mobile khi sidebar mở */}
       {isOpen && <div className="sidebar-overlay" onClick={onCloseMobile}></div>}
 
       <aside className={`app-sidebar ${isOpen ? 'open' : ''}`}>
@@ -27,9 +37,20 @@ export default function Sidebar({ isOpen, onCloseMobile }) {
               to={item.path} 
               key={item.path} 
               className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
-              onClick={onCloseMobile} // Đóng sidebar khi chọn menu (trên mobile)
+              onClick={onCloseMobile}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
-              {item.label}
+              <span>{item.label}</span>
+
+              {item.hasBadge && pendingCount > 0 && (
+                <span style={{
+                    backgroundColor: '#e74c3c', color: 'white',
+                    fontSize: '0.8rem', fontWeight: 'bold',
+                    padding: '2px 8px', borderRadius: '10px'
+                }}>
+                    {pendingCount}
+                </span>
+              )}
             </Link>
           ))}
         </ul>
