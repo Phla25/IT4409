@@ -53,7 +53,8 @@ function AppRoutes() {
 
         {/* Route cho trang danh sách địa điểm gần đây */}
         <Route path="nearby" element={<LocationListPage />} />
-
+        {/* Route cho trang danh sách địa điểm yêu thích */}
+        <Route path="/favorites" element={<FavoriteLocationsPage />} />
         {/* Route cho trang chi tiết một địa điểm */}
         <Route path="locations/:id" element={<LocationDetailPage />} />
         
