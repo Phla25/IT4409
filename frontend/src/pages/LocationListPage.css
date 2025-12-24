@@ -1,18 +1,3 @@
-<<<<<<< HEAD
-.location-list-page {
-    /* max-width được bỏ đi để phần grid có thể rộng hơn */
-    padding: 20px;
-    animation: fadeIn 0.5s ease-in-out;
-    /* ✨ FIX: Đảm bảo component này giãn ra để lấp đầy không gian flex của .main-content */
-    display: flex;
-    flex-direction: column;
-    flex: 1; /* Thêm dòng này để nó chiếm toàn bộ không gian dọc còn lại */
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-=======
 .list-page-container {
   /* 👇 SỬA: Để width 100% và min-height 100vh để nền phủ kín */
   width: 100%;
@@ -20,21 +5,10 @@
   padding: 30px 20px;
   background-color: var(--bg-color, #f9fafb); 
   box-sizing: border-box;
->>>>>>> other_mvc
 }
 
 /* --- HEADER --- */
 .list-header {
-<<<<<<< HEAD
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.list-header h1 {
-    font-size: 2.5rem;
-    color: var(--primary-color, #c0392b);
-    margin-bottom: 8px;
-=======
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -61,7 +35,6 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
->>>>>>> other_mvc
 }
 
 .list-header p {
@@ -79,107 +52,6 @@
     color: var(--accent-color, #e74c3c);
 }
 
-<<<<<<< HEAD
-/* Toolbar */
-.toolbar-container {
-    max-width: 1200px; /* Giới hạn chiều rộng của thanh công cụ */
-    margin: 0 auto 30px auto; /* Căn giữa và tạo khoảng cách dưới */
-}
-
-.toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.search-bar {
-    flex-grow: 1;
-}
-
-.search-bar input {
-    width: 100%;
-    padding: 12px 15px;
-    font-size: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 25px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-bar input:focus {
-    outline: none;
-    border-color: var(--primary-color, #c0392b);
-    box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
-}
-
-.sort-options {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sort-options label {
-    font-weight: 500;
-    color: #333;
-}
-
-.sort-options select {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background-color: white;
-    transition: width 0.2s ease-in-out;
-}
-
-.sort-options select.distance { width: 120px; }
-.sort-options select.rating { width: 150px; }
-
-/* --- CSS cho phần chọn bán kính --- */
-.radius-selector {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.radius-selector label {
-    font-weight: 500;
-    color: #333;
-}
-
-.radius-selector input[type="number"] {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background-color: white;
-    width: 70px; /* Giới hạn chiều rộng của ô input */
-    text-align: center;
-}
-
-/* Tắt các mũi tên tăng/giảm mặc định của trình duyệt */
-.radius-selector input[type=number]::-webkit-inner-spin-button, 
-.radius-selector input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
-}
-.radius-selector input[type=number] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-.radius-selector span {
-    font-weight: 500;
-    color: #555;
-}
-
-/* Grid layout */
-.locations-grid {
-    display: grid;
-    /* Mặc định 1 cột cho màn hình nhỏ */
-    grid-template-columns: 1fr;
-    gap: 25px;
-=======
 /* --- SEARCH --- */
 .search-container {
   /* 👇 Căn giữa thanh tìm kiếm */
@@ -240,7 +112,6 @@
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
->>>>>>> other_mvc
 }
 
 /* 2 cột trên màn hình tablet */
@@ -316,16 +187,6 @@
 }
 
 .location-card:hover {
-<<<<<<< HEAD
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-}
-
-.card-image {
-    width: 100%;
-    height: 210px; /* Tăng chiều cao ảnh */
-    object-fit: cover;
-=======
   transform: translateY(-5px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
 }
@@ -381,7 +242,6 @@
   font-weight: bold;
   backdrop-filter: blur(2px);
   z-index: 2; 
->>>>>>> other_mvc
 }
 
 .card-content {
@@ -406,18 +266,6 @@
 }
 
 .card-footer {
-<<<<<<< HEAD
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-top: auto; /* Đẩy footer xuống dưới cùng */
-}
-
-.card-rating { color: #f39c12; }
-.card-distance { color: #3498db; }
-=======
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -559,4 +407,3 @@ body.dark-mode .loading-state, body.dark-mode .error-state, body.dark-mode .empt
     padding: 0 15px;
   }
 }
->>>>>>> other_mvc

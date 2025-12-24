@@ -31,10 +31,7 @@ export default function LocationCRUD() {
   // --- STATE TÌM KIẾM & PHÂN TRANG ---
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-<<<<<<< HEAD
-=======
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' }); 
->>>>>>> other_mvc
   const itemsPerPage = 10;
 
   // 1. FETCH DỮ LIỆU
@@ -42,14 +39,9 @@ export default function LocationCRUD() {
     const fetchLocations = async () => {
       setLoading(true);
       try {
-<<<<<<< HEAD
-        // Gọi API Admin để lấy tất cả (bao gồm chưa duyệt)
-        const res = await API.get('/locations/admin/all');
-=======
         const res = await API.get('/locations/admin/all', {
           params: { status: 'all' }
         });
->>>>>>> other_mvc
         setLocations(res.data.data);
       } catch (err) {
         console.error("Lỗi tải danh sách:", err);
@@ -105,11 +97,7 @@ export default function LocationCRUD() {
         await API.put(`/locations/${currentId}`, formData);
         alert("Cập nhật thành công!");
       } else {
-<<<<<<< HEAD
-        await API.post('/locations', formData); // API create (nhớ chỉnh route backend ko cần /propose nếu là admin)
-=======
         await API.post('/locations/propose', formData); 
->>>>>>> other_mvc
         alert("Thêm mới thành công!");
       }
       setRefresh(prev => prev + 1);
@@ -180,11 +168,6 @@ export default function LocationCRUD() {
   };
 
   // 5. LOGIC LỌC & PHÂN TRANG
-<<<<<<< HEAD
-  // ============================================================
-  const filteredLocations = useMemo(() => {
-    return locations.filter(loc => 
-=======
   const requestSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -194,20 +177,18 @@ export default function LocationCRUD() {
     setCurrentPage(1);
   };
 
-  const processedLocations = useMemo(() => {
+const processedLocations = useMemo(() => {
     let sortableItems = [...locations];
 
-    sortableItems = sortableItems.filter(loc => 
->>>>>>> other_mvc
-      loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loc.address.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [locations, searchTerm]);
+    // 1. Lọc dữ liệu (Search)
+    if (searchTerm) {
+        sortableItems = sortableItems.filter(loc => 
+            (loc.name && loc.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (loc.address && loc.address.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }
 
-<<<<<<< HEAD
-  const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
-  const currentData = filteredLocations.slice(
-=======
+    // 2. Sắp xếp dữ liệu (Sort)
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
         const valA = a[sortConfig.key] === null || a[sortConfig.key] === undefined ? '' : a[sortConfig.key];
@@ -218,26 +199,20 @@ export default function LocationCRUD() {
         return 0;
       });
     }
+
     return sortableItems;
-  }, [locations, searchTerm, sortConfig]);
+  }, [locations, searchTerm, sortConfig]); // ✅ Đóng ngoặc đúng chỗ, bao gồm cả sortConfig
 
   const totalPages = Math.ceil(processedLocations.length / itemsPerPage);
   const currentData = processedLocations.slice(
->>>>>>> other_mvc
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-<<<<<<< HEAD
-  // ============================================================
-  // RENDER GIAO DIỆN
-  // ============================================================
-=======
   const getSortIndicator = (name) => {
     if (!sortConfig || sortConfig.key !== name) return null;
     return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
   };
->>>>>>> other_mvc
 
   // --- VIEW 1: FORM NHẬP LIỆU ---
   if (view === 'form') {
