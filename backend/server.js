@@ -14,6 +14,7 @@ const rateLimit = require('express-rate-limit');
 
 const locationRoutes = require('./routes/location.routes');
 const authRoutes = require('./routes/auth.routes');
+const favoriteRoutes = require('./routes/favorite.routes');
 
 // Khởi tạo App
 const app = express();
