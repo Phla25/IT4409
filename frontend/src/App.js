@@ -7,12 +7,21 @@ import MainLayout from './components/MainLayout';
 import LeafletMapComponent from './MapContainer';
 // 👇 Đảm bảo đường dẫn này đúng với máy bạn (src/LocationCRUD.js hay src/pages/LocationCRUD.js?)
 import LocationCRUD from './pages/LocationCRUD';
-import LocationListPage from './pages/LocationListPage'; // ✨ THÊM DÒNG NÀY
+import LocationListPage from './pages/LocationListPage'; 
 import LocationDetailPage from './pages/LocationDetailPage.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import FavoriteLocationsPage from './pages/FavoriteLocationsPage';
+import AdminMenuManager from './pages/AdminMenuManager';
 import { AuthProvider, useAuth } from './context/AuthContext';
+// 👇 1. Import LocationProvider (Bắt buộc để MapContainer hoạt động)
+import { LocationProvider } from './context/LocationContext';
+// 👇 2. Import ThemeProvider (Bắt buộc để Header hoạt động nút chuyển theme)
+import { ThemeProvider } from './context/ThemeContext';
+
+// 👇 Import Page Gợi ý Món ăn (Mới)
+import DishRecommendationPage from './pages/DishRecommendationPage';
+import AuthModal from './pages/AuthModal';
 
 // --- TRANG BÁO LỖI QUYỀN (Component nhỏ nội bộ) ---
 function UnauthorizedPage() {
@@ -39,7 +48,10 @@ function AppRoutes() {
         {/* Mặc định hiện Map */}
         <Route index element={<LeafletMapComponent />} />
 
-       {/* Route cho trang danh sách địa điểm gần đây */}
+        {/* 👇 Thêm Route cho trang Gợi ý món ăn */}
+        <Route path="recommendations" element={<DishRecommendationPage />} />
+
+        {/* Route cho trang danh sách địa điểm gần đây */}
         <Route path="nearby" element={<LocationListPage />} />
 
         {/* Route cho trang chi tiết một địa điểm */}
@@ -50,7 +62,8 @@ function AppRoutes() {
           path="admin" 
           element={
             <ProtectedRoute requiredRole="admin">
-               <div style={{ padding: '20px', overflowY: 'auto', height: '100%', width: '100%' }}>
+               {/* ✨ FIX: Xóa padding: '20px' để giao diện phủ kín màn hình, không bị lộ viền trắng */}
+               <div style={{ overflowY: 'auto', height: '100%', width: '100%' }}>
                   {/* Render bảng quản lý */}
                   <LocationCRUD />
                </div>
@@ -58,6 +71,14 @@ function AppRoutes() {
           } 
         />
         
+        <Route 
+          path="admin/menu-manager" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminMenuManager />
+            </ProtectedRoute>
+          } 
+        />
         {/* 👇 THÊM ROUTE NÀY */}
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 
@@ -72,7 +93,12 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-         <AppRoutes />
+        {/* 👇 3. Bọc ThemeProvider và LocationProvider vào đây */}
+        <ThemeProvider>
+          <LocationProvider>
+             <AppRoutes />
+          </LocationProvider>
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

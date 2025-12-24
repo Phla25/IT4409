@@ -1,0 +1,150 @@
+/* Container Modal (Overlay tối) */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex; justify-content: center; align-items: center;
+  backdrop-filter: blur(3px);
+  padding: 20px;
+}
+
+/* Nội dung Modal */
+.upload-modal-content {
+  background: white;
+  width: 100%; max-width: 550px;
+  border-radius: 12px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.upload-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f8f9fa;
+}
+.upload-header h3 { margin: 0; color: #333; }
+
+.upload-body {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Drop Zone */
+.drop-zone {
+  border: 2px dashed #3498db;
+  border-radius: 10px;
+  background: #f0f8ff;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+.drop-zone:hover { background: #e1f0fa; border-color: #2980b9; }
+
+.drop-label {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px; cursor: pointer; color: #555;
+}
+
+/* Grid Preview ảnh */
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.preview-item {
+  position: relative;
+  width: 100%; aspect-ratio: 1/1;
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.preview-item img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+
+.remove-preview-btn {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(0,0,0,0.6); color: white;
+  border: none; border-radius: 50%;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 10px;
+}
+.remove-preview-btn:hover { background: red; }
+
+/* Footer */
+.upload-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center;
+  background: #fff;
+}
+
+.file-count { font-size: 0.9rem; color: #777; }
+
+.btn-submit-upload {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white; border: none;
+  padding: 10px 25px; border-radius: 30px;
+  font-weight: bold; cursor: pointer;
+  transition: transform 0.2s;
+}
+.btn-submit-upload:disabled {
+  background: #bdc3c7; cursor: not-allowed;
+}
+.btn-submit-upload:hover:not(:disabled) {
+  transform: translateY(-2px); box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+}
+
+/* Dark Mode */
+body.dark-mode .upload-modal-content { background: #2a2d33; color: white; }
+body.dark-mode .upload-header { background: #1f2937; border-bottom-color: #374151; }
+body.dark-mode .upload-header h3 { color: white; }
+body.dark-mode .drop-zone { background: #1f2937; border-color: #4b5563; }
+body.dark-mode .drop-label { color: #ccc; }
+body.dark-mode .upload-footer { background: #1f2937; border-top-color: #374151; }
+/* ========================================= */
+/* 🔥 MOBILE RESPONSIVE CHO UPLOAD MODAL 🔥 */
+/* ========================================= */
+@media (max-width: 600px) {
+  .upload-modal-content {
+    width: 100%;
+    height: 100%; /* Full màn hình trên mobile để dễ thao tác */
+    max-height: 100%;
+    border-radius: 0; /* Bỏ bo góc */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .upload-body {
+    flex: 1; /* Tự giãn để chiếm hết khoảng trống */
+  }
+
+  /* Grid preview ảnh nhỏ lại để chứa được nhiều hơn */
+  .preview-grid {
+    grid-template-columns: repeat(3, 1fr); 
+  }
+
+  .drop-label {
+    padding: 20px;
+  }
+
+  .upload-footer {
+    padding: 15px;
+    background: #f8f9fa; /* Tách biệt footer rõ hơn */
+  }
+
+  .btn-submit-upload {
+    width: 100%; /* Nút bấm to full chiều rộng */
+    padding: 14px;
+  }
+}

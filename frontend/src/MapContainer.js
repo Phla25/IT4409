@@ -1,14 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline } from 'react-leaflet';
-import { useNavigate } from 'react-router-dom'; // ✨ THÊM DÒNG NÀY
-import API from './api'; // Dùng instance API chung
-import useGeolocation from './hooks/useGeolocation'; // Giữ nguyên file hook của bạn
-import SimulationController from './components/SimulationController'; // Import component mới
+import { MapContainer as LeafletMapContainer, TileLayer, Marker, Circle, useMap, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import { useNavigate } from 'react-router-dom';
+import API from './api'; 
+import { useLocationContext } from './context/LocationContext'; 
+// 👇 Import useTheme
+import { useTheme } from './context/ThemeContext';
+import SimulationController from './components/SimulationController';
 import { useAuth } from './context/AuthContext';
+import { calculateDistance } from './utils/distance';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix icon Leaflet
+import ProposeLocationModal from './pages/ProposeLocationModal';
+import { FaPlusCircle, FaCrosshairs, FaCheck, FaTimes } from 'react-icons/fa';
+import './MapContainer.css'; 
+
+// --- FIX ICON LEAFLET ---
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -23,10 +30,20 @@ const currentLocationIcon = new L.Icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  className: 'current-location-marker' // Lớp CSS này sẽ được dùng để đổi màu icon
+  className: 'current-location-marker' 
+});
+
+const tempMarkerIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
 });
 
 const hanoiPosition = [21.028511, 105.854199];
+const FIXED_RADIUS_KM = 2; 
 
 // --- COMPONENT HELPER: Tự động zoom vào tuyến đường ---
 const FitBoundsToRoute = ({ route }) => {
@@ -47,21 +64,45 @@ const FitBoundsToRoute = ({ route }) => {
 // --- COMPONENT HELPER: Thay đổi view của bản đồ ---
 const ChangeView = ({ center, zoom }) => {
   const map = useMap();
+  
   useEffect(() => {
-    // setView sẽ di chuyển bản đồ đến tọa độ và mức zoom mới một cách mượt mà
-    if (center) {
-      map.setView(center, zoom, { animate: true, duration: 1 });
-    }
-  }, [center, zoom, map]);
+    if (!map || !center) return;
+
+    const rafId = requestAnimationFrame(() => {
+      if (map.getContainer()) {
+        try {
+          map.setView(center, zoom, { animate: false });
+        } catch (e) {
+          console.warn("Map update ignored:", e);
+        }
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [map, center, zoom]);
 
   return null;
 };
 
-const LeafletMapComponent = () => {
+const MapClickHandler = ({ isAddingMode, onLocationSelect }) => {
+    useMapEvents({
+      click(e) {
+        if (isAddingMode) {
+          onLocationSelect(e.latlng); 
+        }
+      },
+    });
+    return null;
+};
+
+const MapContainer = () => {
   const { userRole } = useAuth();
   const isAdmin = userRole === 'admin';
   const navigate = useNavigate(); // ✨ THÊM DÒNG NÀY
   
+  // 👇 Lấy theme từ Context
+  const { theme } = useTheme();
+
   const [locations, setLocations] = useState([]);
   const [isAdminMode, setIsAdminMode] = useState(false); // Chế độ xem của Admin
   const [radius, setRadius] = useState(5); // Bán kính tìm kiếm (km)
@@ -72,32 +113,39 @@ const LeafletMapComponent = () => {
   const [routeProfile, setRouteProfile] = useState(null); // State mới để lưu profile (driving-car, foot-walking)
   const [isFetchingRoute, setIsFetchingRoute] = useState(false); // Trạng thái loading khi tìm đường
 
-  const userLocation = useGeolocation();
+  const { location: userLocation, setSimulatedLocation } = useLocationContext();
 
-  // --- STATE CHO GIẢ LẬP VỊ TRÍ ---
-  const [simulatedLocation, setSimulatedLocation] = useState(null);
+  const [isAddingMode, setIsAddingMode] = useState(false); 
+  const [tempMarker, setTempMarker] = useState(null); 
+  const [showProposeModal, setShowProposeModal] = useState(false); 
 
-  // Quyết định xem nên dùng vị trí thật hay vị trí giả lập
+  const [isDebugMode, setIsDebugMode] = useState(false);
+
   const effectiveUserLocation = useMemo(() => {
     // Nếu đang ở admin mode, không cần vị trí người dùng
     if (isAdminMode) {
       return { loaded: false, coordinates: { lat: null, lng: null }, error: null };
     }
-    if (simulatedLocation) {
-      return {
-        loaded: true,
-        coordinates: simulatedLocation,
-        error: null,
-      };
-    }
-    return userLocation; // Vị trí thật từ hook
-  }, [simulatedLocation, userLocation, isAdminMode]);
+    return userLocation; 
+  }, [userLocation, isAdminMode]);
 
-  // --- STATE CHO MAP VIEW ---
   const [mapCenter, setMapCenter] = useState(hanoiPosition);
   const [mapZoom, setMapZoom] = useState(13);
 
-  // --- EFFECT ĐỂ XỬ LÝ CHUYỂN VIEW ---
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.shiftKey && (event.key === 'D' || event.key === 'd')) {
+        event.preventDefault();
+        setIsDebugMode(prev => !prev);
+        console.log("Debug Mode toggled");
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   useEffect(() => {
     if (isAdminMode) {
       // Khi chuyển sang Admin View, zoom ra Hà Nội
@@ -115,7 +163,6 @@ const LeafletMapComponent = () => {
     setIsAdminMode(isAdmin);
   }, [isAdmin]);
 
-  // Hàm fetch dữ liệu
   const fetchLocations = useCallback(async () => {
     try {
       let url = ''; // Khởi tạo url rỗng
@@ -137,13 +184,12 @@ const LeafletMapComponent = () => {
     }
   }, [isAdminMode, effectiveUserLocation.loaded, effectiveUserLocation.coordinates, radius]);
 
-  // ============================================================
-  // TÍNH NĂNG CHỈ ĐƯỜNG (SỬ DỤNG OPENROUTESERVICE)
-  // ============================================================
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]);
+
   const getDirections = async (start, end, profile = 'driving-car') => {
-    // BẠN CẦN THAY API KEY CỦA MÌNH VÀO ĐÂY
-    // Đăng ký tại: https://openrouteservice.org/
-    const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImQ5ZjA5NTk2MzBkMDRkYmM4MDM0OWQ5MTUyYmEwYzQ5IiwiaCI6Im11cm11cjY0In0=';
+    const ORS_API_KEY = 'YOUR_OPENROUTESERVICE_API_KEY'; 
 
     if (ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY') {
       alert('Vui lòng thay thế API Key của OpenRouteService trong file MapContainer.js');
@@ -220,25 +266,95 @@ const LeafletMapComponent = () => {
    * @param {DragEndEvent} e - Sự kiện từ Leaflet
    */
   const handleUserMarkerDrag = (e) => {
-    // Chỉ cho phép chức năng này khi là Admin và đang ở User View
-    if (!isAdmin || isAdminMode) return;
+    if ((!isAdminMode && isDebugMode) || (isAdmin && !isAdminMode)) {
+        const newLatLng = e.target.getLatLng();
+        setSimulatedLocation({ lat: newLatLng.lat, lng: newLatLng.lng });
+    }
+  };
 
-    const newLatLng = e.target.getLatLng();
-    setSimulatedLocation({
-      lat: newLatLng.lat,
-      lng: newLatLng.lng,
-    });
+  const toggleAddMode = () => {
+    const newState = !isAddingMode;
+    setIsAddingMode(newState);
+    if (!newState) {
+        setTempMarker(null);
+        setShowProposeModal(false);
+    }
+  };
+
+  const handleMapClick = (latlng) => {
+    setTempMarker(latlng); 
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (effectiveUserLocation.coordinates.lat) {
+        const currentPos = { 
+            lat: effectiveUserLocation.coordinates.lat, 
+            lng: effectiveUserLocation.coordinates.lng 
+        };
+        setTempMarker(currentPos);
+        setMapCenter([currentPos.lat, currentPos.lng]); 
+    } else {
+        alert("Chưa lấy được vị trí của bạn.");
+    }
+  };
+
+  const handleProposeSuccess = () => {
+      setShowProposeModal(false);
+      setIsAddingMode(false);
+      setTempMarker(null);
+      fetchLocations(); 
+  };
+  
+  const getDistanceToUser = (loc) => {
+    if (!effectiveUserLocation.loaded || !effectiveUserLocation.coordinates || !effectiveUserLocation.coordinates.lat) return null;
+    if (!loc || !loc.latitude || !loc.longitude) return null;
+
+    return calculateDistance(
+      effectiveUserLocation.coordinates.lat,
+      effectiveUserLocation.coordinates.lng,
+      parseFloat(loc.latitude),
+      parseFloat(loc.longitude)
+    );
   };
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
 
-      {/* --- BỘ ĐIỀU KHIỂN GIẢ LẬP (CHỈ HIỆN KHI ADMIN Ở USER VIEW) --- */}
-      {isAdmin && !isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
-        <SimulationController
-          initialPosition={effectiveUserLocation.coordinates}
-          onPositionChange={setSimulatedLocation}
-        />
+      {!isAdminMode && (
+          <div className="contribute-controls">
+            <button 
+                className={`btn-contribute ${isAddingMode ? 'active' : ''}`} 
+                onClick={toggleAddMode}
+                title="Đóng góp địa điểm mới"
+            >
+                {isAddingMode ? <><FaTimes /> Hủy thêm</> : <><FaPlusCircle /> Đóng góp địa điểm</>}
+            </button>
+            {isAddingMode && (
+                <button className="btn-use-gps" onClick={handleUseCurrentLocation}>
+                    <FaCrosshairs /> Dùng vị trí hiện tại
+                </button>
+            )}
+          </div>
+      )}
+
+      {isAddingMode && !tempMarker && (
+          <div className="add-mode-instruction">👇 Chạm vào bản đồ để chọn vị trí quán</div>
+      )}
+
+      {isDebugMode && !isAdminMode && userLocation.loaded && userLocation.coordinates.lat && (
+        <>
+            <SimulationController
+              initialPosition={effectiveUserLocation.coordinates}
+              onPositionChange={setSimulatedLocation}
+            />
+            <div style={{
+                position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(255, 0, 0, 0.8)', color: 'white', padding: '5px 10px',
+                borderRadius: '5px', zIndex: 2000, fontSize: '0.8rem', pointerEvents: 'none'
+            }}>
+                🔧 Debug Mode: ON
+            </div>
+        </>
       )}
 
 
@@ -305,8 +421,22 @@ const LeafletMapComponent = () => {
         </div>
       )}
 
-      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
-        <TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" attribution="Google Maps" />
+      {/* ✨ KEY: Thêm theme vào key để buộc Map render lại khi đổi chế độ */}
+      <LeafletMapContainer 
+        key={`${isAdminMode ? "admin-map" : "user-map"}-${theme}`} 
+        center={mapCenter} 
+        zoom={mapZoom} 
+        style={{ height: '100%', width: '100%' }} 
+        scrollWheelZoom={true}
+      >
+        
+        {/* ✨ FIX: LUÔN DÙNG GOOGLE MAPS ✨ */}
+        {/* Chúng ta sẽ dùng CSS Filter để làm tối nó khi ở chế độ Dark */}
+        <TileLayer 
+          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          attribution="Google Maps"
+          className={theme === 'dark' ? 'google-map-dark' : ''}
+        />
 
         {/* Component helper để thay đổi view */}
         <ChangeView center={mapCenter} zoom={mapZoom} />
@@ -314,56 +444,56 @@ const LeafletMapComponent = () => {
         {/* Component helper để tự động zoom */}
         <FitBoundsToRoute route={route} />
 
-        {/* Vẽ tuyến đường lên bản đồ */}
+        <MapClickHandler isAddingMode={isAddingMode} onLocationSelect={handleMapClick} />
+
         {route && <Polyline positions={route} color="#3498db" weight={5} />}
 
-        {/* Marker vị trí người dùng */}
+        {tempMarker && (
+            <Marker position={tempMarker} icon={tempMarkerIcon}>
+                <Popup isOpen={true} closeButton={false} autoPan={true}>
+                    <div style={{textAlign: 'center', padding: '5px'}}>
+                        <p style={{margin: '0 0 10px 0', fontWeight: 'bold'}}>Thêm địa điểm tại đây?</p>
+                        <button 
+                            className="btn-confirm-add"
+                            onClick={() => setShowProposeModal(true)}
+                        >
+                            <FaCheck /> Nhập thông tin quán
+                        </button>
+                    </div>
+                </Popup>
+            </Marker>
+        )}
+
         {!isAdminMode && effectiveUserLocation.coordinates.lat && (
           <>
             <Marker 
               position={[effectiveUserLocation.coordinates.lat, effectiveUserLocation.coordinates.lng]}
               icon={currentLocationIcon}
-              // ✨ BẬT CHỨC NĂNG KÉO THẢ CHO ADMIN Ở USER VIEW
-              draggable={isAdmin && !isAdminMode}
-              // ✨ CẬP NHẬT VỊ TRÍ GIẢ LẬP KHI KÉO XONG
+              draggable={isDebugMode && !isAdminMode}
               eventHandlers={{ dragend: handleUserMarkerDrag }}
             >
-              <Popup>Bạn đang ở đây</Popup>
+              <Popup>
+                Bạn đang ở đây 
+                {effectiveUserLocation.isSimulated && <span style={{color:'red'}}> (Giả lập)</span>}
+              </Popup>
             </Marker>
             <Circle center={[effectiveUserLocation.coordinates.lat, effectiveUserLocation.coordinates.lng]} radius={radius * 1000} />
           </>
         )}
 
-        {/* Marker các địa điểm */}
         {locations.map(loc => (
-          <Marker 
-            key={loc.id} 
-            position={[loc.latitude, loc.longitude]}
-          > 
-            {/* --- CẬP NHẬT NỘI DUNG POPUP --- */}
-            <Popup> 
+          <Marker key={loc.id} position={[loc.latitude, loc.longitude]}> 
+            <Popup maxWidth={300} minWidth={200}> 
               <div className="location-popup-content">
                 <h4 className="popup-title">{loc.name}</h4>
-                
-                <div className="popup-info-line">
-                  <span className="popup-icon">📍</span>
-                  <span>{loc.address}</span>
-                </div>
-
-                {loc.phone_number && (
-                  <div className="popup-info-line">
-                    <span className="popup-icon">📞</span>
-                    <span>{loc.phone_number}</span>
-                  </div>
-                )}
-
+                <div className="popup-info-line"><span>📍</span><span>{loc.address}</span></div>
+                {loc.phone_number && <div className="popup-info-line"><span>📞</span><span>{loc.phone_number}</span></div>}
                 {(loc.min_price > 0 || loc.max_price > 0) && (
                   <div className="popup-info-line">
                     <span className="popup-icon">💰</span>
                     <span>{loc.min_price.toLocaleString()} - {loc.max_price.toLocaleString()} VNĐ</span>
                   </div>
                 )}
-
                 {isAdminMode && (
                   <div className={`popup-status ${loc.is_approved ? 'approved' : 'pending'}`}>
                     {loc.is_approved ? "✅ Đã duyệt" : "❌ Chờ duyệt"}
@@ -405,9 +535,18 @@ const LeafletMapComponent = () => {
             </Popup> 
           </Marker>
         ))}
-      </MapContainer>
+      </LeafletMapContainer>
+
+      {showProposeModal && tempMarker && (
+        <ProposeLocationModal 
+            lat={tempMarker.lat}
+            lng={tempMarker.lng}
+            onClose={() => setShowProposeModal(false)}
+            onSuccess={handleProposeSuccess}
+        />
+      )}
     </div>
   );
 };
 
-export default LeafletMapComponent;
+export default MapContainer;

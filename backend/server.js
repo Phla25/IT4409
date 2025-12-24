@@ -2,11 +2,16 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config(); // Tự động tìm file .env ở thư mục gốc
+const http = require('http'); 
+const { Server } = require("socket.io");
+require('dotenv').config(); 
 
-// --- 1. KIỂM TRA PATH ---
-// Nếu cấu trúc thư mục là backend/src/routes thì phải trỏ vào ./src/...
-// Nếu bạn để file server.js nằm CÙNG CẤP với folder routes thì giữ nguyên ./routes/...
+// --- 1. IMPORT CÁC THƯ VIỆN BẢO MẬT ---
+const helmet = require('helmet');
+// ❌ BỎ DÒNG NÀY: const xss = require('xss-clean'); (Gây lỗi)
+const hpp = require('hpp');
+const rateLimit = require('express-rate-limit');
+
 const locationRoutes = require('./routes/location.routes');
 const authRoutes = require('./routes/auth.routes');
 
@@ -14,48 +19,89 @@ const authRoutes = require('./routes/auth.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// --- 2. MIDDLEWARES ---
-app.use(cors()); // Cho phép Frontend (React) gọi API
-app.use(express.json()); // Cho phép đọc JSON từ body request
-app.use(express.urlencoded({ extended: true })); // Cho phép đọc data từ form
+app.set('trust proxy', 1); 
 
-// Cấu hình để hiển thị ảnh tĩnh (Nếu bạn lưu ảnh user upload vào folder uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// --- 3. ROUTES ---
-app.get('/', (req, res) => {
-  res.send('🚀 Server Bản đồ Ẩm thực Hà Nội đang chạy!');
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", 
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
-// Gắn API Routes
+app.set("socketio", io);
+
+io.on("connection", (socket) => {
+  console.log("⚡ Client Connected:", socket.id);
+  socket.on("join_admin_room", () => {
+    socket.join("admin_room");
+  });
+  socket.on("disconnect", () => {});
+});
+
+// --- CẤU HÌNH MIDDLEWARE ---
+
+app.use(helmet({
+    crossOriginResourcePolicy: false,
+}));
+
+app.use(cors({
+    origin: '*', 
+    credentials: true
+}));
+app.use(express.json({ limit: '10kb' })); 
+app.use(express.urlencoded({ extended: true })); 
+
+// ✅ THAY THẾ xss-clean BẰNG HÀM TỰ VIẾT (An toàn hơn, không gây lỗi)
+app.use((req, res, next) => {
+    const sanitize = (obj) => {
+        if (!obj) return;
+        for (const key in obj) {
+            if (typeof obj[key] === 'string') {
+                // Chuyển đổi ký tự nguy hiểm thành vô hại (< -> &lt;)
+                obj[key] = obj[key].replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                sanitize(obj[key]);
+            }
+        }
+    };
+    
+    // Chỉ làm sạch body và params, tránh đụng vào query nếu nó bị khóa
+    if (req.body) sanitize(req.body);
+    if (req.params) sanitize(req.params);
+    // Nếu req.query tồn tại và sửa được thì sửa, không thì thôi
+    try { if (req.query) sanitize(req.query); } catch (e) {}
+    
+    next();
+});
+
+app.use(hpp()); 
+
+const globalLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, 
+  max: 300, 
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau.'
+});
+app.use('/api', globalLimiter);
+
+// --- ROUTES ---
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.get('/', (req, res) => { res.send('🚀 Server FoodMap Running Secured!'); });
+
 app.use('/api/locations', locationRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
-// --- 4. GLOBAL ERROR HANDLER (Quan trọng cho Frontend) ---
-// Middleware bắt lỗi tập trung, giúp Frontend nhận JSON lỗi thay vì HTML loằng ngoằng
+require('./routes/review.routes')(app);
+try { require('./routes/menu.routes')(app); } catch (e) {}
+
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err.stack);
-  res.status(500).json({
-    success: false,
-    message: "Đã xảy ra lỗi phía server!",
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+  res.status(500).json({ success: false, message: "Lỗi server!", error: err.message });
 });
 
-// --- 5. DATABASE & SERVER START ---
-// Import DB connection (Chỉ chạy sau khi server đã sẵn sàng hoặc trước khi listen)
-const db = require('./config/db.config'); // Sửa path trỏ vào src
-
-// (Tùy chọn) Sync database nếu muốn tự tạo bảng (Chỉ dùng lúc dev)
-// db.sequelize.sync(); 
-
-app.listen(PORT, () => {
-  console.log(`=================================`);
-  console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
-  console.log(`📁 Thư mục gốc: ${__dirname}`);
-  // Tuyệt đối không log JWT_SECRET ra console môi trường production
-  if (process.env.NODE_ENV !== 'production') {
-     console.log(`🔑 JWT Secret: Loaded`); 
-  }
-  console.log(`=================================`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server & Socket chạy tại: http://localhost:${PORT}`);
 });

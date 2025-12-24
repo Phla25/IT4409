@@ -132,7 +132,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   transition: transform var(--transition-speed) ease;
-  z-index: 1050;
+  z-index: 9999 !important;
   border-right: 1px solid rgba(0,0,0,0.1);
 }
 

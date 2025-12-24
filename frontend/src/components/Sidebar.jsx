@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function Sidebar({ isOpen, onCloseMobile }) {
   const { userRole } = useAuth();
   const location = useLocation();
-
+  console.log("Current User Role:", userRole);
   const menuItems = [
     { label: '🏠 Trang chủ', path: '/' },
     { label: '📍 Tìm quanh đây', path: '/nearby' }, // Bạn có thể tách route này nếu muốn

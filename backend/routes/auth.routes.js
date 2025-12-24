@@ -2,15 +2,19 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
-const { verifyToken } = require('../middlewares/auth.middleware');
+
+// 1. 👇 IMPORT THÊM loginLimiter TỪ MIDDLEWARE
+const { verifyToken, loginLimiter } = require('../middlewares/auth.middleware');
 
 // --- PUBLIC ROUTES ---
-router.post('/register', authController.register);       // Đăng ký
-router.post('/login', authController.login);             // Đăng nhập User
-router.post('/admin/login', authController.adminLogin);  // Đăng nhập Admin
+router.post('/register', authController.register);
+
+// 2. 👇 GẮN loginLimiter VÀO CÁC ROUTE ĐĂNG NHẬP
+// (Nó sẽ chặn nếu 1 IP spam đăng nhập sai quá 5 lần)
+router.post('/login', loginLimiter, authController.login);             
+router.post('/admin/login', loginLimiter, authController.adminLogin);  
 
 // --- PROTECTED ROUTES ---
-// Đăng xuất (Thực tế chỉ cần ở Client xóa token, nhưng gọi API để clear cookie nếu có)
 router.post('/logout', verifyToken, authController.logout); 
 
 module.exports = router;

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .location-detail-page {
     padding: 25px;
     max-width: 1200px;
@@ -6,6 +7,26 @@
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     animation: fadeIn 0.5s ease-in-out;
+=======
+/* --- 1. TỔNG THỂ (SỬA LẠI THÀNH FULL PAGE CONTAINER) --- */
+.location-detail-page {
+    /* Xóa max-width ở container cha để nền phủ kín màn hình */
+    width: 100%;
+    min-height: 100vh;
+    padding: 30px 20px;
+    margin: 0; /* Xóa margin auto */
+    
+    /* Sử dụng biến màu nền chung (Sáng: #f9fafb, Tối: #1e1f24) */
+    background-color: var(--bg-color, #f9fafb);
+    
+    /* Xóa style dạng Card cũ */
+    border-radius: 0;
+    box-shadow: none;
+    
+    animation: fadeIn 0.4s ease-out;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease;
+>>>>>>> other_mvc
 }
 
 @keyframes fadeIn {
@@ -14,21 +35,95 @@
 }
 
 .detail-header {
+<<<<<<< HEAD
     border-bottom: 2px solid #eee;
+=======
+    border-bottom: 1px solid #e5e7eb;
+>>>>>>> other_mvc
     padding-bottom: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     display: flex;
     align-items: center;
     gap: 20px;
+<<<<<<< HEAD
+=======
+    flex-wrap: wrap;
+    
+    /* Căn giữa nội dung Header */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.back-button {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #555;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.back-button:hover {
+    background-color: #f0f2f5;
+    color: #333;
+}
+
+.title-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+>>>>>>> other_mvc
 }
 
 .detail-header h1 {
     margin: 0;
     color: #2c3e50;
+<<<<<<< HEAD
     font-size: 2.2rem;
 }
 
 .back-button {
+=======
+    font-size: 2rem;
+    line-height: 1.3;
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+/* --- 3. CÁC NÚT TÁC VỤ (ACTION BUTTONS) --- */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+/* Màu sắc các nút */
+.fav-btn {
+>>>>>>> other_mvc
     background: #fff;
     border: 1px solid #ddd;
     padding: 10px 18px;
@@ -47,8 +142,27 @@
 
 .detail-content-layout {
     display: grid;
+<<<<<<< HEAD
     grid-template-columns: 1fr 1fr;
     gap: 30px;
+=======
+    grid-template-columns: 1fr 1.2fr;
+    gap: 30px;
+    margin-bottom: 40px;
+
+    /* Căn giữa layout */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.detail-info-panel {
+    background: #ffffff; /* Nền trắng cho panel */
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+>>>>>>> other_mvc
 }
 
 .detail-info-panel h3 {
@@ -59,6 +173,7 @@
 }
 
 .detail-info-panel p {
+<<<<<<< HEAD
     line-height: 1.7;
     color: #555;
     margin-bottom: 15px;
@@ -78,21 +193,642 @@
 .detail-map {
     height: 450px;
     width: 100%;
+=======
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #4b5563;
+    margin-bottom: 12px;
+>>>>>>> other_mvc
 }
 
 .status-badge {
     padding: 4px 10px;
+<<<<<<< HEAD
     border-radius: 12px;
     font-size: 0.9rem;
     font-weight: bold;
     color: white;
+=======
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-left: 8px;
+}
+.status-badge.approved { background: #d4edda; color: #155724; }
+.status-badge.pending { background: #fff3cd; color: #856404; }
+
+/* MAP PANEL */
+.detail-map-panel {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    height: 400px;
+    position: relative;
+    z-index: 1;
+    border: 1px solid #e5e7eb;
+}
+.detail-map { width: 100%; height: 100%; }
+
+
+/* --- 5. PHẦN ĐÁNH GIÁ (REVIEWS) - NÂNG CẤP --- */
+.reviews-section {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 40px;
+    margin-top: 20px;
+
+    /* Căn giữa phần review */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.reviews-section h4 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* KHUNG FORM REVIEW ĐẸP HƠN */
+.review-form {
+    background: #fff;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    margin-bottom: 40px;
+    transition: box-shadow 0.3s ease;
+}
+
+.review-form:focus-within {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    border-color: #d1d9e6;
+}
+
+/* Phần chọn sao */
+.rating-select {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.star {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.star.active, .star:hover {
+    color: #f1c40f;
+    transform: scale(1.1);
+}
+
+.rating-text {
+    margin-left: 10px;
+    font-weight: 600;
+    color: #555;
+    background: #f3f4f6;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* Textarea xịn xò */
+.review-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    color: #333;
+    background-color: #f9fafb;
+    resize: vertical;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.review-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+}
+
+.review-textarea::placeholder {
+    color: #aaa;
+}
+
+/* Nút gửi đánh giá */
+.btn-submit-review {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    float: right;
+}
+
+.btn-submit-review:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.btn-submit-review:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Clear float */
+.review-form::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Login Prompt */
+.login-prompt {
+    text-align: center;
+    padding: 30px;
+    background: #fff8e1;
+    border: 1px dashed #f1c40f;
+    border-radius: 10px;
+    color: #856404;
+    font-weight: 500;
+    margin-bottom: 30px;
+}
+
+/* LIST REVIEWS */
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-item {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    border-radius: 12px;
+    transition: transform 0.2s;
+}
+
+.review-item:hover {
+    background-color: #fafafa;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+}
+
+.reviewer-avatar {
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    margin-right: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e0e0e0;
+}
+
+.reviewer-avatar-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.reviewer-placeholder {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.reviewer-name {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1.05rem;
+}
+
+.review-date {
+    font-size: 0.85rem;
+    color: #95a5a6;
+    margin-top: 2px;
+}
+
+.review-rating {
+    color: #f1c40f;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.review-comment {
+    color: #4b5563;
+    line-height: 1.6;
+    font-size: 1rem;
+    padding-left: 60px;
+>>>>>>> other_mvc
 }
 .status-badge.approved { background-color: #2ecc71; }
 .status-badge.pending { background-color: #f39c12; }
 
+<<<<<<< HEAD
 .detail-page-loading, .detail-page-error {
     text-align: center;
     padding: 50px;
     font-size: 1.2rem;
     color: #777;
+=======
+/* --- 6. MENU MODAL (POPUP) --- */
+.menu-modal-overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(2px);
+    padding: 20px;
+}
+
+.menu-modal-content {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    animation: popup 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+@keyframes popup {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.menu-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+.menu-modal-header h2 { font-size: 1.2rem; margin: 0; color: #333; }
+
+.menu-modal-body {
+    padding: 15px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.menu-item-display {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding-bottom: 15px; margin-bottom: 15px;
+    border-bottom: 1px dashed #eee;
+}
+.menu-item-display:last-child { border-bottom: none; margin-bottom: 0; }
+
+.menu-item-info h4 { margin: 0 0 4px; font-size: 1rem; color: #333; }
+.menu-desc { font-size: 0.85rem; color: #777; margin: 0; }
+.menu-item-price { font-weight: bold; color: #e67e22; white-space: nowrap; margin-left: 10px; }
+
+/* --- 7. IMAGE GALLERY --- */
+.detail-gallery-section {
+    margin-top: 30px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 20px;
+    /* Căn giữa */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.image-gallery-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.gallery-img-wrapper {
+    min-width: 150px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #e5e7eb;
+    background-color: #f0f0f0;
+}
+
+.gallery-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.gallery-image:hover {
+    transform: scale(1.1);
+}
+
+.gallery-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.8);
+    user-select: none;
+}
+
+/* --- TRẠNG THÁI LOADING/ERROR (Để phủ kín nền) --- */
+.detail-page-loading, .detail-page-error {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #666;
+    background-color: var(--bg-color, #f9fafb); /* Dùng màu nền theme */
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* ================================================= */
+/* 🔥 MOBILE RESPONSIVE 🔥 */
+/* ================================================= */
+
+@media (max-width: 768px) {
+    .location-detail-page {
+        padding: 15px;
+    }
+
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .back-button { width: 100%; justify-content: center; }
+
+    .title-section {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .detail-header h1 {
+        font-size: 1.5rem;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .action-buttons {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .action-btn { 
+        width: 100%; 
+        justify-content: center; 
+        padding: 12px;
+    }
+    
+    .detail-content-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    /* Đảo thứ tự: Bản đồ lên trên cùng trên Mobile */
+    .detail-map-panel {
+        order: -1; 
+        height: 250px;
+    }
+
+    .detail-info-panel { padding: 15px; }
+
+    .menu-modal-overlay { padding: 10px; }
+    .menu-modal-content { max-height: 80vh; }
+    .menu-item-display { flex-direction: column; align-items: flex-start; }
+    .menu-item-price { margin-left: 0; margin-top: 5px; color: #d35400; }
+
+    .review-comment { padding-left: 0; margin-top: 10px; }
+    .btn-submit-review { width: 100%; float: none; }
+    .star { font-size: 1.8rem; }
+}
+
+@media (max-width: 400px) {
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+/* ========================================= */
+/* ✨ CSS MỚI CHO NÚT XÓA VÀ LIGHTBOX ✨ */
+/* ========================================= */
+
+/* Cần set position relative cho wrapper để đặt nút xóa tuyệt đối bên trong */
+.gallery-img-wrapper {
+  position: relative;
+  /* Thêm hiệu ứng khi hover vào ảnh */
+  transition: transform 0.2s ease;
+}
+.gallery-img-wrapper:hover {
+  transform: scale(1.03);
+  z-index: 2; /* Đảm bảo ảnh nổi lên trên khi hover */
+}
+
+/* Nút xóa ảnh (chỉ hiện cho Admin) */
+.btn-delete-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(231, 76, 60, 0.9); /* Màu đỏ bán trong suốt */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0; /* Ẩn mặc định */
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.btn-delete-image:hover {
+  background: rgb(192, 57, 43);
+  transform: scale(1.1);
+}
+
+/* Chỉ hiện nút xóa khi hover vào wrapper ảnh */
+.gallery-img-wrapper:hover .btn-delete-image {
+  opacity: 1;
+}
+
+/* --- LIGHTBOX (Phóng to ảnh) --- */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85); /* Nền đen mờ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Luôn nổi lên trên cùng */
+  animation: fadeIn 0.3s ease;
+}
+
+.lightbox-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain; /* Đảm bảo ảnh không bị méo */
+  border-radius: 8px;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+  animation: zoomIn 0.3s ease;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  z-index: 10000;
+}
+
+.lightbox-close:hover {
+  color: #e74c3c;
+}
+
+/* Hiệu ứng animation */
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+/* =========================================
+   🌙 DARK MODE SUPPORT 🌙
+   ========================================= */
+body.dark-mode .location-detail-page {
+    background-color: #1e1f24;
+}
+
+/* Loading & Error State in Dark Mode */
+body.dark-mode .detail-page-loading,
+body.dark-mode .detail-page-error {
+    background-color: #1e1f24;
+    color: #9ca3af;
+}
+
+body.dark-mode .detail-info-panel,
+body.dark-mode .review-form,
+body.dark-mode .review-item,
+body.dark-mode .menu-modal-content {
+    background-color: #2a2d33;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .detail-header h1,
+body.dark-mode .detail-info-panel h3,
+body.dark-mode .reviews-section h4,
+body.dark-mode .reviewer-name,
+body.dark-mode .menu-item-info h4,
+body.dark-mode .menu-modal-header h2 {
+    color: #f9fafb;
+}
+
+body.dark-mode .detail-info-panel p,
+body.dark-mode .review-comment,
+body.dark-mode .menu-desc {
+    color: #9ca3af;
+}
+
+body.dark-mode .back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .review-textarea {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .review-textarea:focus {
+    background-color: #2a2d33;
+    border-color: #3b82f6;
+}
+
+body.dark-mode .rating-text {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+/* Modal Specifics */
+body.dark-mode .menu-modal-header {
+    background-color: #1f2937;
+    border-bottom-color: #374151;
+}
+
+body.dark-mode .close-modal-btn {
+    color: #f9fafb;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+body.dark-mode .menu-item-display {
+    border-bottom-color: #374151;
+}
+
+body.dark-mode .fav-btn {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+body.dark-mode .review-item:hover {
+    background-color: #32363e;
+>>>>>>> other_mvc
 }

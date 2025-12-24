@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .location-list-page {
     /* max-width được bỏ đi để phần grid có thể rộng hơn */
     padding: 20px;
@@ -11,9 +12,20 @@
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+=======
+.list-page-container {
+  /* 👇 SỬA: Để width 100% và min-height 100vh để nền phủ kín */
+  width: 100%;
+  min-height: 100vh;
+  padding: 30px 20px;
+  background-color: var(--bg-color, #f9fafb); 
+  box-sizing: border-box;
+>>>>>>> other_mvc
 }
 
+/* --- HEADER --- */
 .list-header {
+<<<<<<< HEAD
     text-align: center;
     margin-bottom: 30px;
 }
@@ -22,6 +34,34 @@
     font-size: 2.5rem;
     color: var(--primary-color, #c0392b);
     margin-bottom: 8px;
+=======
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  background: var(--card-bg, #ffffff);
+  padding: 20px 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--card-border, #e5e7eb);
+  
+  /* 👇 Căn giữa nội dung Header */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  flex-wrap: wrap; 
+  gap: 15px;
+}
+
+.list-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+>>>>>>> other_mvc
 }
 
 .list-header p {
@@ -39,6 +79,7 @@
     color: var(--accent-color, #e74c3c);
 }
 
+<<<<<<< HEAD
 /* Toolbar */
 .toolbar-container {
     max-width: 1200px; /* Giới hạn chiều rộng của thanh công cụ */
@@ -138,6 +179,68 @@
     /* Mặc định 1 cột cho màn hình nhỏ */
     grid-template-columns: 1fr;
     gap: 25px;
+=======
+/* --- SEARCH --- */
+.search-container {
+  /* 👇 Căn giữa thanh tìm kiếm */
+  max-width: 600px;
+  margin: 0 auto 30px auto; 
+  padding: 0 10px;
+}
+
+.search-box {
+  display: flex;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 50px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1rem;
+  outline: none;
+  color: #1f2937;
+}
+
+.search-box button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0 25px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-box button:hover {
+  background: #2563eb;
+}
+
+/* --- GRID LAYOUT --- */
+.locations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  
+  /* 👇 Căn giữa lưới sản phẩm */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+>>>>>>> other_mvc
 }
 
 /* 2 cột trên màn hình tablet */
@@ -213,6 +316,7 @@
 }
 
 .location-card:hover {
+<<<<<<< HEAD
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
@@ -221,6 +325,63 @@
     width: 100%;
     height: 210px; /* Tăng chiều cao ảnh */
     object-fit: cover;
+=======
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+}
+
+.location-card:active {
+    transform: scale(0.98); 
+}
+
+.card-image {
+  height: 180px;
+  width: 100%;
+  position: relative;
+  background-color: #f0f0f0; 
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block; 
+}
+
+/* Style cho placeholder chữ cái */
+.img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem; 
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  user-select: none;
+}
+
+.img-placeholder.fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1; 
+}
+
+.distance-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  backdrop-filter: blur(2px);
+  z-index: 2; 
+>>>>>>> other_mvc
 }
 
 .card-content {
@@ -245,6 +406,7 @@
 }
 
 .card-footer {
+<<<<<<< HEAD
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -255,3 +417,146 @@
 
 .card-rating { color: #f39c12; }
 .card-distance { color: #3498db; }
+=======
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.card-price {
+  font-weight: bold;
+  color: #16a34a;
+  font-size: 0.95rem;
+}
+
+.detail-btn {
+  background: transparent;
+  color: #3b82f6;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.detail-btn:hover {
+  text-decoration: underline;
+}
+
+/* --- STATES --- */
+.loading-state, .error-state, .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+  
+  /* Căn giữa thông báo */
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.retry-btn {
+  margin-top: 15px;
+  padding: 8px 20px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.retry-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* --- PAGINATION --- */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  
+  /* Căn giữa phân trang */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- DARK MODE --- */
+body.dark-mode .list-page-container { background-color: #1e1f24; }
+body.dark-mode .list-header { background: #2a2d33; border-color: #4b5563; }
+body.dark-mode .back-btn { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #93c5fd; }
+body.dark-mode .location-card { background: #1f2937; border-color: #374151; }
+body.dark-mode .card-title { color: #f9fafb; }
+body.dark-mode .card-address { color: #9ca3af; }
+body.dark-mode .list-header h2 { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+body.dark-mode .pagination-controls { border-top-color: #374151; }
+body.dark-mode .pagination-btn { background-color: #1f2937; border-color: #374151; color: #e5e7eb; }
+body.dark-mode .pagination-btn:hover:not(:disabled) { background-color: #374151; border-color: #4b5563; }
+body.dark-mode .pagination-btn:disabled { background-color: #111827; opacity: 0.4; }
+body.dark-mode .search-box { background: #1f2937; border-color: #374151; }
+body.dark-mode .search-box input { background: transparent; color: white; }
+body.dark-mode .loading-state, body.dark-mode .error-state, body.dark-mode .empty-state {
+  background: #2a2d33;
+  color: #e5e7eb;
+}
+
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 600px) {
+  .list-page-container {
+    padding: 15px; 
+  }
+
+  .list-header {
+    flex-direction: column; 
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .list-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .back-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .locations-grid {
+    grid-template-columns: 1fr; 
+    gap: 20px;
+  }
+
+  .search-box input {
+    font-size: 0.9rem;
+    padding: 10px 15px;
+  }
+  .search-box button {
+    padding: 0 15px;
+  }
+}
+>>>>>>> other_mvc
