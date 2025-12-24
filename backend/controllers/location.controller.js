@@ -88,7 +88,8 @@ exports.createLocation = async (req, res) => {
         const newLocationData = {
             ...req.body,
             created_by_user_id: req.user.id,
-            is_approved: false // Mặc định user tạo là chưa duyệt, Admin duyệt sau
+            is_approved: isAutoApproved,
+            created_at: new Date()
         };
 
         // 1. Tạo Location (Bảng cha)
@@ -124,8 +125,8 @@ exports.createLocation = async (req, res) => {
             data: newLocation 
         });
     } catch (error) {
-        console.error("Create location error:", error);
-        res.status(500).json({ message: "Không thể tạo địa điểm mới. Vui lòng kiểm tra dữ liệu." });
+        console.error("Create Error:", error);
+        res.status(500).json({ message: "Lỗi server." });
     }
 };
 
@@ -277,8 +278,6 @@ exports.batchCreateLocations = async (req, res) => {
 // [ADMIN] Cập nhật
 exports.updateLocation = async (req, res) => {
     try {
-        // Kiểm tra quyền sở hữu hoặc quyền Admin (tùy logic dự án)
-        // Ở đây giả sử chỉ Admin hoặc chủ sở hữu mới được sửa
         const updatedLocation = await Location.update(req.params.id, req.body);
         if (!updatedLocation) return res.status(404).json({ message: "Không tìm thấy." });
         
