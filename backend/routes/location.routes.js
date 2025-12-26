@@ -8,6 +8,12 @@ const uploadCloud = require('../config/cloudinary.config');
 // (Đặt các route cụ thể lên đầu)
 
 // Public routes
+router.post(
+  '/batch',
+  [authMiddleware.verifyToken, authMiddleware.isAdmin],
+  locationController.batchCreateLocations
+);
+
 router.get('/', locationController.getAllLocations);
 router.get('/nearby', locationController.getNearbyLocations);
 router.get('/search', locationController.searchLocations);
@@ -32,12 +38,6 @@ router.post(
   '/propose', 
   authMiddleware.verifyToken, 
   locationController.createLocation
-);
-
-router.post(
-  '/batch',
-  [authMiddleware.verifyToken, authMiddleware.isAdmin],
-  locationController.batchCreateLocations
 );
 
 router.get(
