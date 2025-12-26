@@ -46,7 +46,10 @@ app.use(helmet({
     crossOriginResourcePolicy: false,
 }));
 
-app.use(cors()); 
+app.use(cors({
+    origin: '*', 
+    credentials: true
+}));
 app.use(express.json({ limit: '10kb' })); 
 app.use(express.urlencoded({ extended: true })); 
 

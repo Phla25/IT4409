@@ -28,6 +28,7 @@
   margin: 10px 0 5px 0;
   font-size: 2rem;
   background: linear-gradient(90deg, #c0392b, #e74c3c);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
@@ -152,6 +153,7 @@
   color: #777;
   margin-bottom: 15px;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -201,4 +203,35 @@ body.dark-mode .back-btn {
 }
 body.dark-mode .back-btn:hover {
   background: #e74c3c; /* Hover vẫn đỏ */
+}
+/* ========================================= */
+/* 🔥 MOBILE RESPONSIVE 🔥 */
+/* ========================================= */
+@media (max-width: 768px) {
+  .dish-page-container {
+    padding: 15px;
+  }
+
+  .dish-page-header {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .header-content h2 {
+    font-size: 1.5rem; /* Giảm cỡ chữ tiêu đề */
+  }
+
+  .header-content p {
+    font-size: 0.95rem;
+  }
+
+  /* Grid chuyển về 1 cột nếu màn hình quá bé */
+  .dish-grid {
+    gap: 15px;
+    grid-template-columns: 1fr; 
+  }
+
+  .dish-card-img {
+    height: 180px; /* Giảm chiều cao ảnh chút */
+  }
 }

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const locationController = require('../controllers/location.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
-
+const uploadCloud = require('../config/cloudinary.config');
 // --- 1. CÁC ROUTE TĨNH (STATIC ROUTES) ---
 
 // Public routes
@@ -44,17 +44,45 @@ router.post(
   locationController.batchCreateLocations
 );
 
-// --- 2. CÁC ROUTE ĐỘNG (DYNAMIC ROUTES) - Đặt sau cùng ---
-
-// 👇 Route Upload Ảnh (Mới thêm)
-// URL: /api/locations/:id/images
+router.get(
+  '/admin/pending-count', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.getPendingCount
+);
 router.post(
-    '/:id/images',
-    [authMiddleware.verifyToken, locationController.uploadMiddleware], 
-    locationController.uploadLocationImage
+  '/', 
+  authMiddleware.verifyToken, // (Nếu có)
+  uploadCloud.array('images', 10), // 📸 Cho phép up tối đa 10 ảnh, tên field là 'images'
+  locationController.createLocation
 );
 
-// Lấy chi tiết
+// 2. Route Thêm ảnh vào địa điểm cũ (API mới)
+router.post(
+  '/:id/images',
+  authMiddleware.verifyToken,
+  (req, res, next) => {
+      // Middleware debug để bắt lỗi của uploadCloud
+      uploadCloud.array('images', 10)(req, res, (err) => {
+          if (err) {
+              console.error("🔥 LỖI UPLOAD (MIDDLEWARE):", err);
+              // Trả lỗi chi tiết về frontend để bạn xem
+              return res.status(500).json({ 
+                  success: false, 
+                  message: "Lỗi Upload ảnh: " + (err.message || err), 
+                  error_detail: err 
+              });
+          }
+          // Nếu không lỗi thì đi tiếp vào Controller
+          next();
+      });
+  },
+  locationController.addImagesToLocation
+);
+
+// --- 2. CÁC ROUTE ĐỘNG (DYNAMIC ROUTES) ---
+// (Các route có tham số :id phải đặt xuống cuối cùng)
+
+// Lấy chi tiết địa điểm (Đã chuyển xuống đây)
 router.get('/:id', authMiddleware.verifyTokenOptional, locationController.getLocationById);
 
 // Cập nhật
@@ -63,8 +91,13 @@ router.put(
   [authMiddleware.verifyToken, authMiddleware.isAdmin], 
   locationController.updateLocation
 );
-
-// Xóa
+// ROUTE XÓA ẢNH (Chỉ Admin mới được xóa)
+router.delete(
+  '/images/:imageId', 
+  [authMiddleware.verifyToken, authMiddleware.isAdmin], 
+  locationController.deleteLocationImage
+);
+// Xóa địa điểm 
 router.delete(
   '/:id', 
   [authMiddleware.verifyToken, authMiddleware.isAdmin], 

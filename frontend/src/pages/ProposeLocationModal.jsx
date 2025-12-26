@@ -182,8 +182,8 @@ const ProposeLocationModal = ({ lat, lng, onClose, onSuccess }) => {
                 <input name="address" required value={formData.address} onChange={handleChange} placeholder="Số nhà, đường..." />
             </div>
             <div className="form-group">
-                <label>Quận/Huyện <span style={{color:'red'}}>*</span></label>
-                <input name="district" required value={formData.district} onChange={handleChange} placeholder="VD: Cầu Giấy" />
+                <label>Xã/ Phường <span style={{color:'red'}}>*</span></label>
+                <input name="district" required value={formData.district} onChange={handleChange} placeholder="VD: Bạch Mai" />
             </div>
           </div>
 
