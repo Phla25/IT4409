@@ -189,7 +189,7 @@ const MapContainer = () => {
   }, [fetchLocations]);
 
   const getDirections = async (start, end, profile = 'driving-car') => {
-    const ORS_API_KEY = 'YOUR_OPENROUTESERVICE_API_KEY'; 
+    const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImQ5ZjA5NTk2MzBkMDRkYmM4MDM0OWQ5MTUyYmEwYzQ5IiwiaCI6Im11cm11cjY0In0='; 
 
     if (ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY') {
       alert('Vui lòng thay thế API Key của OpenRouteService trong file MapContainer.js');
