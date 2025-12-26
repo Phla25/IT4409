@@ -219,8 +219,10 @@ const LocationListPage = () => {
         ))}
       </div>
 
+    {/* 👇 ĐOẠN CODE PHÂN TRANG MỚI (GỌN GÀNG HƠN) */}
       {!loading && !error && locations.length > itemsPerPage && (
         <div className="pagination-controls">
+          {/* Nút TRƯỚC */}
           <button 
             className="pagination-btn" 
             disabled={currentPage === 1}
@@ -228,29 +230,65 @@ const LocationListPage = () => {
           >
             &laquo; Trước
           </button>
-          <span className="pagination-info">
-            Trang <strong>{currentPage}</strong> / {totalPages}
-          </span>
+
+          {/* Logic hiển thị số trang thông minh (Có dấu ...) */}
+          {(() => {
+            let pages = [];
+            // Nếu tổng trang <= 7 thì hiện hết
+            if (totalPages <= 7) {
+               for (let i = 1; i <= totalPages; i++) {
+                 pages.push(i);
+               }
+            } else {
+               // Luôn hiện trang 1
+               pages.push(1);
+
+               // Nếu đang ở xa trang 1 thì hiện dấu ...
+               if (currentPage > 3) {
+                  pages.push('...');
+               }
+
+               // Hiện các trang xung quanh trang hiện tại
+               let start = Math.max(2, currentPage - 1);
+               let end = Math.min(totalPages - 1, currentPage + 1);
+
+               // Điều chỉnh nếu ở gần đầu hoặc cuối
+               if (currentPage <= 3) { end = 4; }
+               if (currentPage >= totalPages - 2) { start = totalPages - 3; }
+
+               for (let i = start; i <= end; i++) {
+                  pages.push(i);
+               }
+
+               // Nếu đang ở xa trang cuối thì hiện dấu ...
+               if (currentPage < totalPages - 2) {
+                  pages.push('...');
+               }
+
+               // Luôn hiện trang cuối
+               pages.push(totalPages);
+            }
+
+            return pages.map((page, index) => (
+              <button 
+                key={index} 
+                onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
+                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                disabled={page === '...'}
+                style={page === '...' ? { border: 'none', cursor: 'default' } : {}}
+              >
+                {page}
+              </button>
+            ));
+          })()}
+
+          {/* Nút SAU */}
           <button 
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-            disabled={currentPage === 1}
-          >
-            &laquo; Trang trước
-          </button>
-          {[...Array(totalPages)].map((_, index) => (
-            <button 
-              key={index + 1} 
-              onClick={() => setCurrentPage(index + 1)}
-              className={currentPage === index + 1 ? 'active' : ''}
-            >
-              {index + 1}
-            </button>
-          ))}
-          <button 
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+            className="pagination-btn"
             disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
           >
-            Trang sau &raquo;
+            Sau &raquo;
           </button>
         </div>
       )}
