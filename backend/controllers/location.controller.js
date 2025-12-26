@@ -330,42 +330,74 @@ exports.getPendingCount = async (req, res) => {
 
 // DISH RECOMMENDATION (Code cũ của bạn, không đổi)
 exports.getDishRecommendations = async (req, res) => {
-    /* ... Giữ nguyên code cũ vì nó không liên quan đến upload ảnh ... */
-    try {
-        const { lat, lng } = req.query;
-        if (!lat || !lng) return res.status(400).json({ message: "Cần tọa độ." });
+  try {
+    const { lat, lng } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ message: "Cần tọa độ để lấy thời tiết." });
+    }
+
+    // 1. Gọi Service lấy dữ liệu thời tiết
+    const weather = await WeatherService.getCurrentWeather(lat, lng);
     
-        const weather = await WeatherService.getCurrentWeather(lat, lng);
-        const categoryKeywords = WeatherService.getCategoryKeywords(weather);
+    // 2. Gọi Service lấy danh sách các từ khóa (tên món) phù hợp
+    // Ví dụ: ['Lẩu', 'Nướng', 'Phở']
+    const categoryKeywords = WeatherService.getCategoryKeywords(weather);
+
+    // 3. Query Database phức hợp để tìm món ăn dựa trên từ khóa
+    // Tìm món ăn mà tên món (BaseDish) HOẶC tên tùy chỉnh (MenuItem) chứa từ khóa
+    const sql = `
+      SELECT * FROM (
+        SELECT DISTINCT
+          m.id, 
+          COALESCE(m.custom_name, bd.name) as dish_name, 
+          m.price, 
+          (SELECT image_url FROM menuitemimages WHERE menu_item_id = m.id LIMIT 1) as dish_image,
+          l.id as location_id, 
+          l.name as restaurant_name, 
+          l.address
+        FROM menuitems m
+        JOIN locations l ON m.location_id = l.id
+        JOIN basedishes bd ON m.base_dish_id = bd.id
+        
+        -- Join để check Category của Món ăn (Base Dish) nếu cần thiết, 
+        -- nhưng ưu tiên tìm theo tên món trong basedishes
+        LEFT JOIN basedishcategories bdc ON bd.id = bdc.base_dish_id
+        LEFT JOIN categories c_dish ON bdc.category_id = c_dish.id
+
+        WHERE l.is_approved = true
+        AND (
+          -- Tìm tên món gốc chứa từ khóa (VD: 'Lẩu nấm' chứa 'Lẩu')
+          bd.name ILIKE ANY($1) 
+          OR 
+          -- Tìm tên món tùy chỉnh chứa từ khóa
+          m.custom_name ILIKE ANY($1)
+          OR
+          -- Tìm theo Category món (nếu có, để bao quát hơn)
+          c_dish.name ILIKE ANY($1)
+        )
+      ) AS distinct_dishes
+      ORDER BY RANDOM()
+      LIMIT 8
+    `;
+
+    // Chuyển mảng keyword thành dạng params cho ANY: ['%Lẩu%', '%Nướng%', ...]
+    const params = [categoryKeywords.map(kw => `%${kw}%`)];
     
-        const sql = `
-          SELECT * FROM (
-            SELECT DISTINCT
-              m.id, COALESCE(m.custom_name, bd.name) as dish_name, m.price, 
-              (SELECT image_url FROM menuitemimages WHERE menu_item_id = m.id LIMIT 1) as dish_image,
-              l.id as location_id, l.name as restaurant_name, l.address
-            FROM menuitems m
-            JOIN locations l ON m.location_id = l.id
-            JOIN basedishes bd ON m.base_dish_id = bd.id
-            LEFT JOIN basedishcategories bdc ON bd.id = bdc.base_dish_id
-            LEFT JOIN categories c_dish ON bdc.category_id = c_dish.id
-            LEFT JOIN locationcategories lc ON l.id = lc.location_id
-            LEFT JOIN categories c_loc ON lc.category_id = c_loc.id
-            WHERE l.is_approved = true
-            AND (c_dish.name ILIKE ANY($1) OR c_loc.name ILIKE ANY($1))
-          ) AS distinct_dishes
-          ORDER BY RANDOM() LIMIT 8
-        `;
-        const params = [categoryKeywords.map(kw => `%${kw}%`)];
-        const result = await db.query(sql, params);
-    
-        res.json({
-          success: true,
-          weather: { temp: weather?.temperature, condition_code: weather?.weathercode, keywords: categoryKeywords },
-          data: result.rows
-        });
-      } catch (error) {
-        console.error("Dish Rec Error:", error);
-        res.status(500).json({ message: "Lỗi gợi ý món." });
-      }
+    const result = await db.query(sql, params);
+
+    res.json({
+      success: true,
+      weather: {
+        temp: weather?.temperature,
+        condition_code: weather?.weathercode,
+        keywords: categoryKeywords
+      },
+      data: result.rows
+    });
+
+  } catch (error) {
+    console.error("Dish Recommendation Error:", error);
+    res.status(500).json({ message: "Lỗi khi lấy gợi ý món ăn." });
+  }
 };
